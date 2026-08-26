@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReviseSphere | The Ultimate Study Suite</title>
+  <link rel="icon" type="image/png" href="logo_icon.png" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1E2A4A',
+            primaryDark: '#0F172A',
+            bgMain: '#F5F7FB',
+            accentBtn: '#DCEFD3',
+            accent: '#C7E4C7',
+            success: '#16A34A',
+            error: '#DC2626',
+            borderClr: '#E5E7EB',
+            textMain: '#111827',
+            textGray: '#6B7280'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          borderRadius: {
+            'card': '16px',
+            'btn': '8px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-width: 1100px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body class="bg-bgMain text-textMain dark:bg-slate-900 dark:text-slate-100 antialiased min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const {
+      ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell
+    } = Recharts;
+
+    const QUIZ_DATABASE = [
+      {
+        id: 'bio-1',
+        title: "Cellular Respiration & Krebs Cycle",
+        subject: "BIOLOGY",
+        category: "CELLULAR BIOLOGY",
+        difficulty: "Hard",
+        questionsCount: 5,
+        timeMinutes: 15,
+        questions: [
+          {
+            id: 1,
+            question: "Which molecule acts as the primary electron donor to Complex I of the mitochondrial electron transport chain during aerobic respiration?",
+            options: [
+              { id: 'A', text: 'NADH' },
+              { id: 'B', text: 'FADH₂' },
+              { id: 'C', text: 'Pyruvate' },
+              { id: 'D', text: 'Oxaloacetate' }
+            ],
+            correctOption: 'A',
+            explanation: "NADH transfers its high-energy electrons directly to Complex I (NADH dehydrogenase), yielding approximately 2.5 ATP molecules per donor."
+          },
+          {
+            id: 2,
+            question: "Where within the eukaryotic cell does the Krebs cycle (Citric Acid Cycle) exclusively take place?",
+            options: [
+              { id: 'A', text: 'Cytosol' },
+              { id: 'B', text: 'Mitochondrial Matrix' },
+              { id: 'C', text: 'Mitochondrial Intermembrane Space' },
+              { id: 'D', text: 'Inner Mitochondrial Membrane' }
+            ],
+            correctOption: 'B',
+            explanation: "The Krebs cycle enzymes are located soluble in the mitochondrial matrix, surrounded by the inner membrane."
+          },
+          {
+            id: 3,
+            question: "What is the net gain of ATP molecules synthesized via substrate-level phosphorylation per single molecule of glucose during glycolysis?",
+            options: [
+              { id: 'A', text: '1 ATP' },
+              { id: 'B', text: '2 ATP' },
+              { id: 'C', text: '4 ATP' },
+              { id: 'D', text: '32 ATP' }
+            ],
+            correctOption: 'B',
+            explanation: "Glycolysis consumes 2 ATP molecules in its investment phase and produces 4 ATP in the payoff phase, yielding a net gain of 2 ATP."
+          },
+          {
+            id: 4,
+            question: "What essential role does molecular oxygen (O₂) play in oxidative phosphorylation?",
+            options: [
+              { id: 'A', text: 'Catalyzes the formation of Acetyl-CoA' },
+              { id: 'B', text: 'Acts as the final electron acceptor in the electron transport chain' },
+              { id: 'C', text: 'Phosphorylates ADP directly to ATP' },
+              { id: 'D', text: 'Pumps protons across the inner membrane' }
+            ],
+            correctOption: 'B',
+            explanation: "Oxygen accepts electrons at the end of the electron transport chain along with protons to form water, maintaining the proton gradient."
+          },
+          {
+            id: 5,
+            question: "Which multiprotein enzyme complexes harness the proton motive force to synthesize ATP during chemiosmosis?",
+            options: [
+              { id: 'A', text: 'Cytochrome c oxidase' },
+              { id: 'B', text: 'ATP Synthase' },
+              { id: 'C', text: 'Pyruvate Dehydrogenase' },
+              { id: 'D', text: 'Succinate Dehydrogenase' }
+            ],
+            correctOption: 'B',
+            explanation: "ATP Synthase functions as a molecular motor driven by proton flux from the intermembrane space back into the matrix to convert ADP and inorganic phosphate into ATP."
+          }
+        ]
+      },
+      {
+        id: 'chem-1',
+        title: "Stoichiometry & Chemical Equations",
+        subject: "CHEMISTRY",
+        category: "STOICHIOMETRY",
+        difficulty: "Medium",
+        questionsCount: 5,
+        timeMinutes: 15,
+        questions: [
+          {
+            id: 1,
+            question: "Given the balanced chemical equation: N₂ + 3H₂ → 2NH₃. How many moles of ammonia (NH₃) are produced when 4.5 moles of hydrogen gas (H₂) react completely with excess nitrogen?",
+            options: [
+              { id: 'A', text: '1.5 moles of NH₃' },
+              { id: 'B', text: '3.0 moles of NH₃' },
+              { id: 'C', text: '4.5 moles of NH₃' },
+              { id: 'D', text: '9.0 moles of NH₃' }
+            ],
+            correctOption: 'B',
+            explanation: "The stoichiometric mole ratio of H₂ to NH₃ is 3:2. Therefore, 4.5 moles H₂ × (2 moles NH₃ / 3 moles H₂) = 3.0 moles of NH₃."
+          },
+          {
+            id: 2,
+            question: "In a chemical reaction, how is the 'limiting reactant' defined?",
+            options: [
+              { id: 'A', text: 'The reactant present in the smallest molar mass' },
+              { id: 'B', text: 'The reactant that is completely consumed first, limiting product yield' },
+              { id: 'C', text: 'The reactant left over after the reaction completes' },
+              { id: 'D', text: 'The catalyst that speeds up the reaction rate' }
+            ],
+            correctOption: 'B',
+            explanation: "The limiting reactant determines the maximum theoretical yield of product because the reaction halts as soon as it is exhausted."
+          },
+          {
+            id: 3,
+            question: "What is the molar mass of Calcium Carbonate (CaCO₃)? [Atomic masses: Ca = 40.08, C = 12.01, O = 16.00 g/mol]",
+            options: [
+              { id: 'A', text: '68.09 g/mol' },
+              { id: 'B', text: '84.09 g/mol' },
+              { id: 'C', text: '100.09 g/mol' },
+              { id: 'D', text: '116.09 g/mol' }
+            ],
+            correctOption: 'C',
+            explanation: "Molar mass = 40.08 + 12.01 + 3(16.00) = 40.08 + 12.01 + 48.00 = 100.09 g/mol."
+          },
+          {
+            id: 4,
+            question: "What is the mathematical formula used to determine the percent yield of a reaction?",
+            options: [
+              { id: 'A', text: '(Theoretical Yield / Actual Yield) × 100%' },
+              { id: 'B', text: '(Actual Yield / Theoretical Yield) × 100%' },
+              { id: 'C', text: '(Mass of Reactants / Mass of Products) × 100%' },
+              { id: 'D', text: '(Excess Mass / Total Mass) × 100%' }
+            ],
+            correctOption: 'B',
+            explanation: "Percent yield measures efficiency by comparing the actual amount harvested in experiment to the maximum theoretical prediction."
+          },
+          {
+            id: 5,
+            question: "Which equation represents the Ideal Gas Law relating pressure (P), volume (V), temperature (T), and molar amount (n)?",
+            options: [
+              { id: 'A', text: 'PV = nRT' },
+              { id: 'B', text: 'P₁V₁ = P₂V₂' },
+              { id: 'C', text: 'V / T = k' },
+              { id: 'D', text: 'P / T = nR' }
+            ],
+            correctOption: 'A',
+            explanation: "The Ideal Gas Law state equation is PV = nRT, where R is the universal gas constant."
+          }
+        ]
+      },
+      {
+        id: 'hist-1',
+        title: "Cold War Alliances & Geopolitics",
+        subject: "HISTORY",
+        category: "WORLD HISTORY",
+        difficulty: "Hard",
+        questionsCount: 5,
+        timeMinutes: 20,
+        questions: [
+          {
+            id: 1,
+            question: "Which international military defensive alliance was formed in 1949 by Western nations to counter Soviet expansion in Europe?",
+            options: [
+              { id: 'A', text: 'Warsaw Pact' },
+              { id: 'B', text: 'NATO (North Atlantic Treaty Organization)' },
+              { id: 'C', text: 'League of Nations' },
+              { id: 'D', text: 'SEATO' }
+            ],
+            correctOption: 'B',
+            explanation: "NATO was created in April 1949 as a mutual defense alliance pledging collective security among Western democracies against Soviet aggression."
+          },
+          {
+            id: 2,
+            question: "What was the official Soviet response to West Germany joining NATO in 1955?",
+            options: [
+              { id: 'A', text: 'Establishment of the Warsaw Pact' },
+              { id: 'B', text: 'Blockade of West Berlin' },
+              { id: 'C', text: 'Construction of the Berlin Wall' },
+              { id: 'D', text: 'Signing of the Marshall Plan' }
+            ],
+            correctOption: 'A',
+            explanation: "In May 1955, the Soviet Union established the Warsaw Pact as a rival collective defense treaty among Eastern Bloc satellite states."
+          },
+          {
+            id: 3,
+            question: "What strategic doctrine guided United States foreign policy to halt the spread of communism during the Cold War?",
+            options: [
+              { id: 'A', text: 'Isolationism' },
+              { id: 'B', text: 'Containment Policy (Truman Doctrine)' },
+              { id: 'C', text: 'Appeasement' },
+              { id: 'D', text: 'Detente' }
+            ],
+            correctOption: 'B',
+            explanation: "Articulated by George Kennan and formalized in the Truman Doctrine (1947), Containment sought to prevent further geopolitical expansion of communism."
+          },
+          {
+            id: 4,
+            question: "In which year did the Cuban Missile Crisis occur, bringing the US and USSR closest to nuclear war?",
+            options: [
+              { id: 'A', text: '1953' },
+              { id: 'B', text: '1962' },
+              { id: 'C', text: '1971' },
+              { id: 'D', text: '1983' }
+            ],
+            correctOption: 'B',
+            explanation: "The October 1962 crisis unfolded over 13 tense days following the discovery of Soviet nuclear ballistic missiles stationed in Cuba."
+          },
+          {
+            id: 5,
+            question: "Which Soviet policy reforms introduced by Mikhail Gorbachev in the late 1980s emphasized economic restructuring and political openness?",
+            options: [
+              { id: 'A', text: 'Collectivization and Industrialization' },
+              { id: 'B', text: 'Perestroika and Glasnost' },
+              { id: 'C', text: 'Five-Year Plans' },
+              { id: 'D', text: 'De-Stalinization' }
+            ],
+            correctOption: 'B',
+            explanation: "Perestroika ('restructuring') and Glasnost ('openness') aimed to modernize the Soviet state but accelerated political transformation and the Soviet collapse."
+          }
+        ]
+      },
+      {
+        id: 'math-1',
+        title: "Differential Equations & Calculus",
+        subject: "MATHEMATICS",
+        category: "CALCULUS",
+        difficulty: "Easy",
+        questionsCount: 5,
+        timeMinutes: 15,
+        questions: [
+          {
+            id: 1,
+            question: "What is the general solution to the first-order separable differential equation dy/dx = k · y?",
+            options: [
+              { id: 'A', text: 'y(x) = C · e^(kx)' },
+              { id: 'B', text: 'y(x) = kx + C' },
+              { id: 'C', text: 'y(x) = C · ln(kx)' },
+              { id: 'D', text: 'y(x) = 1/2 k x² + C' }
+            ],
+            correctOption: 'A',
+            explanation: "Separating variables gives ∫(1/y) dy = ∫k dx, leading to ln|y| = kx + C, which exponentiates to y(x) = C · e^(kx)."
+          },
+          {
+            id: 2,
+            question: "What is the order of the differential equation: y'' + 3y' + 2y = 0?",
+            options: [
+              { id: 'A', text: 'First order' },
+              { id: 'B', text: 'Second order' },
+              { id: 'C', text: 'Third order' },
+              { id: 'D', text: 'Degree two' }
+            ],
+            correctOption: 'B',
+            explanation: "The order of a differential equation is defined by the highest derivative present, which is the second derivative y''."
+          },
+          {
+            id: 3,
+            question: "Which integrating factor μ(x) is used to solve linear first-order differential equations in standard form y' + P(x)y = Q(x)?",
+            options: [
+              { id: 'A', text: 'μ(x) = e^(∫P(x)dx)' },
+              { id: 'B', text: 'μ(x) = ∫P(x)dx' },
+              { id: 'C', text: 'μ(x) = e^(P(x))' },
+              { id: 'D', text: 'μ(x) = ln(P(x))' }
+            ],
+            correctOption: 'A',
+            explanation: "Multiplying the equation by μ(x) = e^(∫P(x)dx) allows the left-hand side to be condensed into a single product derivative d/dx [μ(x)y]."
+          },
+          {
+            id: 4,
+            question: "What characterizes an equilibrium (steady-state) solution for an autonomous differential equation dy/dt = f(y)?",
+            options: [
+              { id: 'A', text: 'Solutions where dy/dt = 0' },
+              { id: 'B', text: 'Solutions where y(t) approaches infinity' },
+              { id: 'C', text: 'Solutions where d²y/dt² = 0' },
+              { id: 'D', text: 'Non-constant linear functions' }
+            ],
+            correctOption: 'A',
+            explanation: "Equilibrium points occur where the rate of change dy/dt is zero, causing the state variable y to remain constant over time."
+          },
+          {
+            id: 5,
+            question: "How is an arbitrary constant 'C' in a differential equation general solution evaluated to yield a particular solution?",
+            options: [
+              { id: 'A', text: 'By evaluating the derivative at infinity' },
+              { id: 'B', text: 'By substituting given initial or boundary conditions' },
+              { id: 'C', text: 'By setting C equal to zero' },
+              { id: 'D', text: 'By integrating twice' }
+            ],
+            correctOption: 'B',
+            explanation: "Applying initial conditions (e.g., y(x₀) = y₀) specifies the unique constant C matching the physical scenario."
+          }
+        ]
+      },
+      {
+        id: 'phys-1',
+        title: "Electromagnetic Induction & Waves",
+        subject: "PHYSICS",
+        category: "ELECTROMAGNETISM",
+        difficulty: "Medium",
+        questionsCount: 5,
+        timeMinutes: 20,
+        questions: [
+          {
+            id: 1,
+            question: "According to Faraday's Law of Electromagnetic Induction, what induces an electromotive force (EMF) in a closed conductive circuit?",
+            options: [
+              { id: 'A', text: 'A constant uniform magnetic flux' },
+              { id: 'B', text: 'A changing magnetic flux over time' },
+              { id: 'C', text: 'A static electric field' },
+              { id: 'D', text: 'High electrical resistance' }
+            ],
+            correctOption: 'B',
+            explanation: "Faraday's Law states that induced EMF is directly proportional to the time rate of change of magnetic flux through the loop: ε = -dΦ/dt."
+          },
+          {
+            id: 2,
+            question: "What physical direction principle is stated by Lenz's Law regarding induced current?",
+            options: [
+              { id: 'A', text: 'Induced current opposes the change in magnetic flux that creates it' },
+              { id: 'B', text: 'Induced current amplifies the magnetic field' },
+              { id: 'C', text: 'Induced current flows parallel to the magnetic field' },
+              { id: 'D', text: 'Induced current depends solely on voltage supply' }
+            ],
+            correctOption: 'A',
+            explanation: "Lenz's Law ensures conservation of energy by specifying that induced magnetic fields oppose the change in original magnetic flux."
+          },
+          {
+            id: 3,
+            question: "What is the speed of electromagnetic waves traveling through a vacuum?",
+            options: [
+              { id: 'A', text: '3 × 10⁸ m/s' },
+              { id: 'B', text: '343 m/s' },
+              { id: 'C', text: '1.5 × 10⁶ m/s' },
+              { id: 'D', text: '9.8 m/s²' }
+            ],
+            correctOption: 'A',
+            explanation: "All electromagnetic waves (light, radio, X-rays) propagate at the speed of light c ≈ 3.00 × 10⁸ m/s in vacuum."
+          },
+          {
+            id: 4,
+            question: "Which SI unit is used to measure inductance (L) in an electrical inductor?",
+            options: [
+              { id: 'A', text: 'Tesla (T)' },
+              { id: 'B', text: 'Weber (Wb)' },
+              { id: 'C', text: 'Henry (H)' },
+              { id: 'D', text: 'Farad (F)' }
+            ],
+            correctOption: 'C',
+            explanation: "Inductance is measured in Henrys (H), where 1 Henry induces 1 Volt per change of 1 Ampere per second."
+          },
+          {
+            id: 5,
+            question: "How does an ideal transformer adjust alternating voltage between primary (V_p) and secondary (V_s) coils based on turn counts (N_p, N_s)?",
+            options: [
+              { id: 'A', text: 'V_s / V_p = N_s / N_p' },
+              { id: 'B', text: 'V_s / V_p = N_p / N_s' },
+              { id: 'C', text: 'V_s · V_p = N_s · N_p' },
+              { id: 'D', text: 'V_s + V_p = N_s + N_p' }
+            ],
+            correctOption: 'A',
+            explanation: "The voltage ratio across ideal transformer windings equals the direct ratio of their coil turns."
+          }
+        ]
+      },
+      {
+        id: 'cs-1',
+        title: "Big O Analysis & Data Structures",
+        subject: "COMPUTER SCIENCE",
+        category: "ALGORITHMS",
+        difficulty: "Hard",
+        questionsCount: 5,
+        timeMinutes: 20,
+        questions: [
+          {
+            id: 1,
+            question: "What is the worst-case time complexity of searching for an element in a sorted array using Binary Search?",
+            options: [
+              { id: 'A', text: 'O(1)' },
+              { id: 'B', text: 'O(log n)' },
+              { id: 'C', text: 'O(n)' },
+              { id: 'D', text: 'O(n log n)' }
+            ],
+            correctOption: 'B',
+            explanation: "Binary Search repeatedly divides the search interval in half, leading to logarithmic runtime complexity O(log n)."
+          },
+          {
+            id: 2,
+            question: "Which data structure operates strictly under the Last-In, First-Out (LIFO) protocol?",
+            options: [
+              { id: 'A', text: 'Queue' },
+              { id: 'B', text: 'Stack' },
+              { id: 'C', text: 'Linked List' },
+              { id: 'D', text: 'Binary Heap' }
+            ],
+            correctOption: 'B',
+            explanation: "A Stack pushes and pops elements from the top, ensuring the last added item is the first retrieved."
+          },
+          {
+            id: 3,
+            question: "What is the worst-case time complexity of QuickSort when bad pivot choices (e.g., sorted input) occur continuously?",
+            options: [
+              { id: 'A', text: 'O(n log n)' },
+              { id: 'B', text: 'O(n)' },
+              { id: 'C', text: 'O(n²)' },
+              { id: 'D', text: 'O(2ⁿ)' }
+            ],
+            correctOption: 'C',
+            explanation: "When QuickSort consistently selects extreme elements as pivots, partitioning collapses into quadratic O(n²) comparisons."
+          },
+          {
+            id: 4,
+            question: "What is the spatial memory complexity required to represent a graph with N vertices using an Adjacency Matrix?",
+            options: [
+              { id: 'A', text: 'O(N)' },
+              { id: 'B', text: 'O(N + E)' },
+              { id: 'C', text: 'O(N²)' },
+              { id: 'D', text: 'O(N log N)' }
+            ],
+            correctOption: 'C',
+            explanation: "An adjacency matrix allocates an N × N 2D array regardless of how many edges exist, consuming O(N²) space."
+          },
+          {
+            id: 5,
+            question: "In a balanced Binary Search Tree (such as an AVL tree or Red-Black tree), what is the maximum lookup time for any node?",
+            options: [
+              { id: 'A', text: 'O(1)' },
+              { id: 'B', text: 'O(log n)' },
+              { id: 'C', text: 'O(n)' },
+              { id: 'D', text: 'O(n log n)' }
+            ],
+            correctOption: 'B',
+            explanation: "Self-balancing binary trees guarantee tree height is maintained at O(log n), capping search operations at O(log n)."
+          }
+        ]
+      }
+    ];
+
+    const DEFAULT_DECKS = [
+      {
+        id: 'deck-bio-1',
+        title: "Biology: Cell Organelles",
+        subject: "BIOLOGY",
+        cards: [
+          { id: 'c1', front: "What biological structure translates messenger RNA into amino acid sequences?", back: "Ribosomes (They bind mRNA and transfer RNA to synthesize polypeptides)." },
+          { id: 'c2', front: "What is the primary function of the Mitochondria?", back: "Powerhouse of the cell: Generates ATP through aerobic respiration and Krebs cycle." },
+          { id: 'c3', front: "What is the role of the Nucleolus?", back: "Produces and assembles the cell's ribosomes inside the nucleus." },
+          { id: 'c4', front: "What is the primary function of Lysosomes?", back: "Contains digestive enzymes to break down waste materials and cellular debris." }
+        ]
+      },
+      {
+        id: 'deck-chem-1',
+        title: "Chemistry: Functional Groups",
+        subject: "CHEMISTRY",
+        cards: [
+          { id: 'c5', front: "What functional group contains a carbon double-bonded to oxygen (-C=O)?", back: "Carbonyl group (found in aldehydes and ketones)." },
+          { id: 'c6', front: "What is the chemical structure of a Hydroxyl group?", back: "-OH group attached to a carbon skeleton." },
+          { id: 'c7', front: "What is a Carboxylic Acid group?", back: "-COOH group (carbonyl + hydroxyl attached to the same carbon)." }
+        ]
+      }
+    ];
+
+    // Full Logo with Text (For Sign In and Sign Up screens)
+    const LogoIcon = () => (
+      <div className="flex flex-col items-center justify-center">
+        <img
+          src="logo.png"
+          alt="ReviseSphere Official Logo"
+          className="w-56 h-auto object-contain mx-auto filter drop-shadow-md hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.style.display = 'none';
+          }}
+        />
+      </div>
+    );
+
+    // Textless Icon Logo (For Homepage, Quizpage, Flashcardpage, and Profilepage)
+    const NavbarLogo = () => (
+      <div className="flex items-center gap-3 cursor-pointer group">
+        <img
+          src="logo_icon.png"
+          alt="ReviseSphere Symbol Logo"
+          className="h-10 w-auto object-contain group-hover:scale-105 transition-transform"
+        />
+        <span className="text-white font-extrabold text-lg tracking-tight group-hover:text-accent transition-colors">
+          Revise<span className="font-semibold text-slate-200">Sphere</span>
+        </span>
+      </div>
+    );
+
+    const BotAvatar = ({ onClick }) => (
+      <button
+        onClick={onClick}
+        className="w-14 h-14 p-0 rounded-full bg-[#0a1628] dark:bg-[#0a1628] border-2 border-slate-200 dark:border-slate-700 shadow-2xl flex items-center justify-center relative cursor-pointer hover:scale-110 active:scale-95 transition-all z-30 group overflow-hidden"
+        title="Open AI Study Assistant"
+      >
+        <img src="bot_avatar.png" alt="ReviseSphere AI Bot" className="w-full h-full object-cover" />
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </span>
+      </button>
+    );
+
+    function App() {
+      const [currentRoute, setCurrentRoute] = useState('/dashboard');
+      const [selectedQuiz, setSelectedQuiz] = useState(QUIZ_DATABASE[1]);
+      const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
+      const [userAnswers, setUserAnswers] = useState({});
+      const [flaggedQuestions, setFlaggedQuestions] = useState({});
+      const [quizResults, setQuizResults] = useState(null);
+
+      const [quizHistory, setQuizHistory] = useState([
+        { id: 'h1', title: 'Cellular Respiration & Krebs Cycle Quiz', subject: 'BIOLOGY', percent: 90, date: '2 hours ago', correctCount: 4, totalCount: 5 },
+        { id: 'h2', title: 'Organic Chemistry Flashcard Deck Study', subject: 'CHEMISTRY', percent: 80, date: 'Yesterday', correctCount: 4, totalCount: 5 }
+      ]);
+
+      const [isDarkMode, setIsDarkMode] = useState(false);
+
+      const [flashcardDecks, setFlashcardDecks] = useState(DEFAULT_DECKS);
+      const [currentDeck, setCurrentDeck] = useState(DEFAULT_DECKS[0]);
+      const [deckCardIndex, setDeckCardIndex] = useState(0);
+
+      const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+      const [aiMessages, setAiMessages] = useState([
+        { sender: 'ai', text: 'Hello! I am your ReviseSphere AI Study Assistant. How can I help you master your subjects today?' }
+      ]);
+      const [chatInput, setChatInput] = useState('');
+
+      const [user, setUser] = useState({
+        name: 'Amara Okeke',
+        email: 'amara.okeke@stanford.edu',
+        isPro: true,
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+      });
+
+      useEffect(() => {
+        if (isDarkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }, [isDarkMode]);
+
+      const navigate = (route) => {
+        setCurrentRoute(route);
+        window.scrollTo(0, 0);
+      };
+
+      const startQuiz = (quizObj) => {
+        setSelectedQuiz(quizObj);
+        setActiveQuestionIdx(0);
+        setQuizResults(null);
+        navigate('/quiz/7');
+      };
+
+      const submitQuiz = () => {
+        let correctCount = 0;
+        selectedQuiz.questions.forEach((q) => {
+          const ansKey = `${selectedQuiz.id}_q${q.id}`;
+          if (userAnswers[ansKey] === q.correctOption) {
+            correctCount += 1;
+          }
+        });
+        const percent = Math.round((correctCount / selectedQuiz.questions.length) * 100);
+
+        const resultObj = {
+          quiz: selectedQuiz,
+          userAnswers: { ...userAnswers },
+          correctCount,
+          total: selectedQuiz.questions.length,
+          percent,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        };
+        setQuizResults(resultObj);
+
+        const newHistoryItem = {
+          id: 'h-' + Date.now(),
+          title: selectedQuiz.title + ' Quiz',
+          subject: selectedQuiz.subject,
+          percent: percent,
+          date: 'Just now',
+          correctCount,
+          totalCount: selectedQuiz.questions.length
+        };
+        setQuizHistory(prev => [newHistoryItem, ...prev]);
+
+        navigate('/quiz/results');
+      };
+
+      const handleSendMessage = (textToSend) => {
+        const msg = textToSend || chatInput;
+        if (!msg.trim()) return;
+
+        const newMessages = [...aiMessages, { sender: 'user', text: msg }];
+        setAiMessages(newMessages);
+        setChatInput('');
+
+        setTimeout(() => {
+          let aiReply = "That's a great question! Based on your revision notes, focusing on core formulas and active recall using flashcards will boost your memory retention by over 40%.";
+          if (msg.toLowerCase().includes('krebs') || msg.toLowerCase().includes('bio')) {
+            aiReply = "The Krebs cycle (Citric Acid Cycle) takes place in the mitochondrial matrix. It processes Acetyl-CoA derived from pyruvate and yields NADH, FADH₂, and 2 ATP per glucose molecule!";
+          } else if (msg.toLowerCase().includes('stoichiometry') || msg.toLowerCase().includes('chem')) {
+            aiReply = "For stoichiometry, always balance your chemical equation first! Then convert given masses to moles using molar mass before applying the stoichiometric mole ratio.";
+          } else if (msg.toLowerCase().includes('quiz') || msg.toLowerCase().includes('test')) {
+            aiReply = "You can take timed practice quizzes in the Quiz Engine! Flag any tough questions to review before submitting.";
+          }
+
+          setAiMessages(prev => [...prev, { sender: 'ai', text: aiReply }]);
+        }, 600);
+      };
+
+      const isAuthPage = currentRoute === '/login' || currentRoute === '/signup';
+
+      return (
+        <div className="min-h-screen flex flex-col justify-between relative bg-bgMain dark:bg-slate-900 transition-colors">
+          {!isAuthPage && (
+            <Navbar
+              currentRoute={currentRoute}
+              navigate={navigate}
+              user={user}
+              isDarkMode={isDarkMode}
+              setIsDarkMode={setIsDarkMode}
+            />
+          )}
+
+          <main className={`flex-1 ${!isAuthPage ? 'pt-20 pb-16 max-w-[1440px] mx-auto px-8 w-full' : 'flex items-center justify-center py-12'}`}>
+            {currentRoute === '/login' && <LoginScreen navigate={navigate} setUser={setUser} />}
+            {currentRoute === '/signup' && <SignUpScreen navigate={navigate} setUser={setUser} />}
+            {currentRoute === '/dashboard' && <DashboardScreen navigate={navigate} startQuiz={startQuiz} user={user} />}
+            {currentRoute === '/quizzes' && <QuizzesScreen navigate={navigate} startQuiz={startQuiz} />}
+            {currentRoute === '/quiz/7' && (
+              <QuizInProgressScreen
+                navigate={navigate}
+                quiz={selectedQuiz}
+                activeIdx={activeQuestionIdx}
+                setActiveIdx={setActiveQuestionIdx}
+                userAnswers={userAnswers}
+                setUserAnswers={setUserAnswers}
+                flaggedQuestions={flaggedQuestions}
+                setFlaggedQuestions={setFlaggedQuestions}
+                submitQuiz={submitQuiz}
+              />
+            )}
+            {currentRoute === '/quiz/results' && (
+              <QuizResultsScreen
+                navigate={navigate}
+                results={quizResults}
+                startQuiz={startQuiz}
+                quiz={selectedQuiz}
+              />
+            )}
+            {currentRoute === '/flashcards' && (
+              <FlashcardsCreateScreen
+                navigate={navigate}
+                flashcardDecks={flashcardDecks}
+                setFlashcardDecks={setFlashcardDecks}
+                setCurrentDeck={setCurrentDeck}
+              />
+            )}
+            {currentRoute === '/flashcard-study' && (
+              <FlashcardStudyScreen
+                navigate={navigate}
+                currentDeck={currentDeck}
+                setCurrentDeck={setCurrentDeck}
+                flashcardDecks={flashcardDecks}
+                setFlashcardDecks={setFlashcardDecks}
+                deckCardIndex={deckCardIndex}
+                setDeckCardIndex={setDeckCardIndex}
+              />
+            )}
+            {currentRoute === '/profile' && (
+              <ProfileScreen
+                navigate={navigate}
+                user={user}
+                setUser={setUser}
+                isDarkMode={isDarkMode}
+                setIsDarkMode={setIsDarkMode}
+                quizHistory={quizHistory}
+                flashcardDecks={flashcardDecks}
+              />
+            )}
+          </main>
+
+          {/* Floating AI Bot Assistant Trigger */}
+          {!isAuthPage && (
+            <div className="fixed bottom-16 right-8 z-40">
+              <BotAvatar onClick={() => setIsAiChatOpen(!isAiChatOpen)} />
+            </div>
+          )}
+
+          {/* AI Tutor Drawer / Chat Modal */}
+          {isAiChatOpen && (
+            <div className="fixed bottom-28 right-8 w-96 bg-white dark:bg-slate-800 rounded-card shadow-2xl border border-slate-200 dark:border-slate-700 z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+              <div className="bg-primary dark:bg-slate-900 text-white p-4 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0a1628] border border-slate-600 flex-shrink-0">
+                    <img src="bot_avatar.png" alt="ReviseSphere AI Bot" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm leading-none">ReviseSphere AI Assistant</h3>
+                    <span className="text-[10px] text-emerald-400 font-semibold">Online • Ready to help</span>
+                  </div>
+                </div>
+                <button onClick={() => setIsAiChatOpen(false)} className="text-slate-300 hover:text-white font-bold text-lg">✕</button>
+              </div>
+
+              <div className="p-4 h-72 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 dark:bg-slate-900/50">
+                {aiMessages.map((m, idx) => (
+                  <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] rounded-xl p-3 text-xs leading-relaxed ${m.sender === 'user' ? 'bg-primary dark:bg-indigo-600 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-none shadow-sm'}`}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-2">
+                <div className="flex gap-1 overflow-x-auto pb-1 text-[10px]">
+                  <button onClick={() => handleSendMessage("Explain Krebs Cycle")} className="whitespace-nowrap bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded hover:bg-slate-200 text-slate-700 dark:text-slate-200">💡 Krebs Cycle</button>
+                  <button onClick={() => handleSendMessage("Stoichiometry tip")} className="whitespace-nowrap bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded hover:bg-slate-200 text-slate-700 dark:text-slate-200">💡 Stoichiometry</button>
+                  <button onClick={() => handleSendMessage("Study advice")} className="whitespace-nowrap bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded hover:bg-slate-200 text-slate-700 dark:text-slate-200">💡 Active Recall</button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ask AI anything..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary"
+                  />
+                  <button onClick={() => handleSendMessage()} className="bg-primary dark:bg-indigo-600 text-white px-3 py-2 rounded-btn text-xs font-bold hover:bg-opacity-90">Send</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Route Switcher Toolbar */}
+          <div className="fixed bottom-3 left-1/2 -translate-x-1/2 bg-primary/95 dark:bg-slate-900/95 text-white px-5 py-2 rounded-full text-xs flex gap-3 shadow-2xl z-50 items-center border border-slate-700 backdrop-blur-md">
+            <span className="text-accent font-semibold uppercase tracking-wider text-[10px]">SDP View Switcher:</span>
+            <button onClick={() => navigate('/login')} className={`hover:underline ${currentRoute === '/login' ? 'text-accent font-bold' : ''}`}>Login</button>
+            <span>•</span>
+            <button onClick={() => navigate('/signup')} className={`hover:underline ${currentRoute === '/signup' ? 'text-accent font-bold' : ''}`}>SignUp</button>
+            <span>•</span>
+            <button onClick={() => navigate('/dashboard')} className={`hover:underline ${currentRoute === '/dashboard' ? 'text-accent font-bold' : ''}`}>Dashboard</button>
+            <span>•</span>
+            <button onClick={() => navigate('/quizzes')} className={`hover:underline ${currentRoute === '/quizzes' ? 'text-accent font-bold' : ''}`}>Quizzes</button>
+            <span>•</span>
+            <button onClick={() => startQuiz(QUIZ_DATABASE[1])} className={`hover:underline ${currentRoute === '/quiz/7' ? 'text-accent font-bold' : ''}`}>Quiz Live</button>
+            <span>•</span>
+            <button onClick={() => navigate('/quiz/results')} className={`hover:underline ${currentRoute === '/quiz/results' ? 'text-accent font-bold' : ''}`}>Results</button>
+            <span>•</span>
+            <button onClick={() => navigate('/flashcards')} className={`hover:underline ${currentRoute === '/flashcards' ? 'text-accent font-bold' : ''}`}>Create Deck</button>
+            <span>•</span>
+            <button onClick={() => navigate('/flashcard-study')} className={`hover:underline ${currentRoute === '/flashcard-study' ? 'text-accent font-bold' : ''}`}>Study Deck</button>
+            <span>•</span>
+            <button onClick={() => navigate('/profile')} className={`hover:underline ${currentRoute === '/profile' ? 'text-accent font-bold' : ''}`}>Profile</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Navbar({ currentRoute, navigate, user, isDarkMode, setIsDarkMode }) {
+      return (
+        <header className="fixed top-0 left-0 right-0 h-16 bg-primary dark:bg-slate-950 text-white z-40 border-b border-slate-800 shadow-md transition-colors">
+          <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-between">
+            <div onClick={() => navigate('/dashboard')}>
+              <NavbarLogo />
+            </div>
+
+            <nav className="flex gap-8 items-center font-medium text-sm">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className={`py-5 border-b-2 transition-colors ${currentRoute === '/dashboard' ? 'border-accent text-white font-semibold' : 'border-transparent text-slate-300 hover:text-white'}`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => navigate('/quizzes')}
+                className={`py-5 border-b-2 transition-colors ${currentRoute.startsWith('/quiz') ? 'border-accent text-white font-semibold' : 'border-transparent text-slate-300 hover:text-white'}`}
+              >
+                Quizzes
+              </button>
+              <button
+                onClick={() => navigate('/flashcards')}
+                className={`py-5 border-b-2 transition-colors ${currentRoute.startsWith('/flashcard') ? 'border-accent text-white font-semibold' : 'border-transparent text-slate-300 hover:text-white'}`}
+              >
+                Flashcards
+              </button>
+              <button
+                onClick={() => navigate('/profile')}
+                className={`py-5 border-b-2 transition-colors ${currentRoute === '/profile' ? 'border-accent text-white font-semibold' : 'border-transparent text-slate-300 hover:text-white'}`}
+              >
+                Profile
+              </button>
+            </nav>
+
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 transition-all text-xs"
+                title="Toggle Light/Dark Theme"
+              >
+                {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+              </button>
+
+              <button
+                onClick={() => navigate('/flashcards')}
+                className="bg-accentBtn text-primary font-semibold text-xs px-4 py-2 rounded-btn hover:bg-opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <span className="text-base font-bold">+</span> New Deck
+              </button>
+
+              <div
+                onClick={() => navigate('/profile')}
+                className="w-9 h-9 rounded-full overflow-hidden border-2 border-slate-400 cursor-pointer bg-amber-700 flex items-center justify-center text-white text-xs font-bold hover:ring-2 ring-accent transition-all"
+                title={user.name}
+              >
+                <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function LoginScreen({ navigate, setUser }) {
+      const [emailInput, setEmailInput] = useState('amara.okeke@stanford.edu');
+      const [passInput, setPassInput] = useState('••••••••••••');
+
+      const handleLogin = (e) => {
+        if (e) e.preventDefault();
+        setUser(prev => ({
+          ...prev,
+          email: emailInput || prev.email,
+          name: emailInput ? emailInput.split('@')[0].replace('.', ' ') : prev.name
+        }));
+        navigate('/dashboard');
+      };
+
+      const handleGuestLogin = () => {
+        setUser({
+          name: 'Guest Student',
+          email: 'guest@revisesphere.edu',
+          isPro: false,
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+        });
+        navigate('/dashboard');
+      };
+
+      return (
+        <div className="w-[1000px] bg-white dark:bg-slate-800 rounded-[24px] shadow-2xl overflow-hidden flex min-h-[580px] border border-borderClr dark:border-slate-700">
+          <div className="w-5/12 bg-primary dark:bg-slate-950 p-12 text-white flex flex-col justify-center items-center text-center relative">
+            <div className="mb-6 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800">
+              <LogoIcon />
+            </div>
+            <h1 className="text-3xl font-extrabold mb-3 tracking-tight">Welcome Back!</h1>
+            <p className="text-slate-300 text-sm leading-relaxed max-w-xs">
+              Unlock your ReviseSphere workspace to master your upcoming exams.
+            </p>
+          </div>
+
+          <div className="w-7/12 p-12 flex flex-col justify-center bg-white dark:bg-slate-800">
+            <div className="max-w-md mx-auto w-full">
+              <div className="bg-slate-100 dark:bg-slate-700 p-1 rounded-lg flex mb-8">
+                <button className="flex-1 py-2 text-xs font-semibold rounded-md bg-primary dark:bg-indigo-600 text-white shadow">Log In</button>
+                <button onClick={() => navigate('/signup')} className="flex-1 py-2 text-xs font-semibold rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white">Sign Up</button>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="w-full px-3 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                  <input
+                    type="password"
+                    value={passInput}
+                    onChange={(e) => setPassInput(e.target.value)}
+                    className="w-full px-3 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <input type="checkbox" defaultChecked className="rounded text-primary focus:ring-primary" />
+                    <span>Remember me</span>
+                  </label>
+                  <a href="#" onClick={(e) => e.preventDefault()} className="text-primary dark:text-indigo-400 font-semibold hover:underline">Forgot password?</a>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-primary dark:bg-indigo-600 text-white py-2.5 rounded-btn font-semibold text-xs hover:bg-opacity-95 transition-all mt-4 shadow"
+                >
+                  Log In
+                </button>
+              </form>
+
+              <div className="relative my-6 text-center">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
+                <span className="relative px-3 bg-white dark:bg-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">OR CONTINUE WITH</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={handleLogin} className="border border-borderClr dark:border-slate-600 py-2.5 rounded-btn text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" /><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.4 7.37 24 12 24z" /><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.15z" /><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.6 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z" /></svg>
+                  Google
+                </button>
+                <button onClick={handleGuestLogin} className="border border-borderClr dark:border-slate-600 py-2.5 rounded-btn text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
+                  As a Guest
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function SignUpScreen({ navigate, setUser }) {
+      const [nameInput, setNameInput] = useState('Amara Okeke');
+      const [emailInput, setEmailInput] = useState('amara.okeke@stanford.edu');
+
+      const handleSignUp = (e) => {
+        if (e) e.preventDefault();
+        setUser(prev => ({
+          ...prev,
+          name: nameInput || prev.name,
+          email: emailInput || prev.email
+        }));
+        navigate('/dashboard');
+      };
+
+      return (
+        <div className="w-[1000px] bg-white dark:bg-slate-800 rounded-[24px] shadow-2xl overflow-hidden flex min-h-[580px] border border-borderClr dark:border-slate-700">
+          <div className="w-5/12 bg-primary dark:bg-slate-950 p-12 text-white flex flex-col justify-center items-center text-center relative">
+            <div className="mb-6 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800">
+              <LogoIcon />
+            </div>
+            <h1 className="text-3xl font-extrabold mb-3 tracking-tight">Get Started!</h1>
+            <p className="text-slate-300 text-sm leading-relaxed max-w-xs">
+              Create your ReviseSphere study suite account in seconds.
+            </p>
+          </div>
+
+          <div className="w-7/12 p-12 flex flex-col justify-center bg-white dark:bg-slate-800">
+            <div className="max-w-md mx-auto w-full">
+              <div className="bg-slate-100 dark:bg-slate-700 p-1 rounded-lg flex mb-6">
+                <button onClick={() => navigate('/login')} className="flex-1 py-2 text-xs font-semibold rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white">Log In</button>
+                <button className="flex-1 py-2 text-xs font-semibold rounded-md bg-primary dark:bg-indigo-600 text-white shadow">Sign Up</button>
+              </div>
+
+              <form onSubmit={handleSignUp} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="w-full px-3 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="w-full px-3 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                  <input
+                    type="password"
+                    defaultValue="••••••••••••"
+                    className="w-full px-3 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <input type="checkbox" defaultChecked className="rounded text-primary focus:ring-primary" />
+                    <span>Agree to SDP Terms &amp; Conditions</span>
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-primary dark:bg-indigo-600 text-white py-2.5 rounded-btn font-semibold text-xs hover:bg-opacity-95 transition-all mt-3 shadow"
+                >
+                  Create Account
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function DashboardScreen({ navigate, startQuiz, user }) {
+      return (
+        <div className="relative pb-8 space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-3 pt-4">
+            <h1 className="text-4xl font-extrabold text-primary dark:text-indigo-400 tracking-tight">The Ultimate Study Suite</h1>
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              Welcome back, <span className="font-bold text-primary dark:text-white">{user.name}</span>! Everything you need to master your courses and ace your upcoming exams with AI tools.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="bg-primary dark:bg-slate-800 text-white rounded-card p-8 flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all border border-slate-800 dark:border-slate-700">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-purple-200/20 text-indigo-300 flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15l-2 5l9-11h-8l2-5l-9 11h8z" /></svg>
+                </div>
+                <h3 className="text-xl font-bold mb-3">Mock Exam &amp; Quiz Engine</h3>
+                <p className="text-slate-300 text-xs leading-relaxed mb-8">
+                  Transform any syllabus or textbook chapter into targeted interactive mock tests with real-time countdown timers. Select topics, step through questions, and track your instant scores!
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/quizzes')}
+                className="text-white text-xs font-semibold flex items-center gap-2 hover:text-accent transition-colors self-start group bg-white/10 px-4 py-2 rounded-btn"
+              >
+                Explore Quiz Engine <span className="group-hover:translate-x-1 transition-transform">&gt;</span>
+              </button>
+            </div>
+
+            <div className="bg-primary dark:bg-slate-800 text-white rounded-card p-8 flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all border border-slate-800 dark:border-slate-700">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-200/20 text-emerald-300 flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                </div>
+                <h3 className="text-xl font-bold mb-3">AI Study Deck &amp; Flashcards</h3>
+                <p className="text-slate-300 text-xs leading-relaxed mb-8">
+                  Paste raw lectures, class slides, or essays. Our model isolates critical terminology, formulas, and historical dates, producing formatted flashcards with active study timers.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/flashcards')}
+                className="text-white text-xs font-semibold flex items-center gap-2 hover:text-accent transition-colors self-start group bg-white/10 px-4 py-2 rounded-btn"
+              >
+                Explore Flashcard Maker <span className="group-hover:translate-x-1 transition-transform">&gt;</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src="logo_icon.png" alt="Icon" className="w-10 h-10 object-contain" />
+              <div>
+                <h4 className="font-extrabold text-sm text-primary dark:text-indigo-400">Quick Start Revision Session</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Jump right into high-yield chemistry or biology questions</p>
+              </div>
+            </div>
+            <button
+              onClick={() => startQuiz(QUIZ_DATABASE[1])}
+              className="bg-accentBtn text-primary font-bold text-xs px-5 py-2.5 rounded-btn hover:bg-opacity-90 transition-all shadow-sm"
+            >
+              Start Chemistry Quiz Now →
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function QuizzesScreen({ navigate, startQuiz }) {
+      const [subjectFilter, setSubjectFilter] = useState('ALL');
+      const [diffFilter, setDiffFilter] = useState('ALL');
+
+      const filteredQuizzes = QUIZ_DATABASE.filter(q => {
+        if (subjectFilter !== 'ALL' && q.subject !== subjectFilter) return false;
+        if (diffFilter !== 'ALL' && q.difficulty !== diffFilter) return false;
+        return true;
+      });
+
+      return (
+        <div className="space-y-6 pb-12">
+          <div className="bg-[#D9E2EC] dark:bg-slate-800 rounded-card p-6 flex items-center justify-around text-slate-800 dark:text-slate-100 shadow-sm border border-slate-300 dark:border-slate-700">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm p-1.5">
+                <img src="logo_icon.png" alt="Icon" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">OVERALL MASTERY:</div>
+                <div className="text-base font-extrabold text-primary dark:text-indigo-400">12/15 QUIZZES PASSED</div>
+              </div>
+            </div>
+
+            <div className="h-10 w-[1px] bg-slate-400/40 dark:bg-slate-700"></div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-emerald-600 font-bold shadow-sm">
+                📈
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">AVERAGE SCORE:</div>
+                <div className="text-base font-extrabold text-primary dark:text-indigo-400">86.5% CORRECT</div>
+              </div>
+            </div>
+
+            <div className="h-10 w-[1px] bg-slate-400/40 dark:bg-slate-700"></div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-amber-500 font-bold shadow-sm">
+                ⚡
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">STUDY STREAK:</div>
+                <div className="text-base font-extrabold text-primary dark:text-indigo-400">8 DAYS</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-8 items-start">
+            <div className="w-60 bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 space-y-6 shadow-sm flex-shrink-0">
+              <h3 className="font-extrabold text-sm text-primary dark:text-indigo-400">Filters</h3>
+
+              <div className="space-y-3">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SUBJECT</div>
+                <div className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {[
+                    { label: 'All Subjects', val: 'ALL' },
+                    { label: 'Biology', val: 'BIOLOGY' },
+                    { label: 'Chemistry', val: 'CHEMISTRY' },
+                    { label: 'History', val: 'HISTORY' },
+                    { label: 'Mathematics', val: 'MATHEMATICS' },
+                    { label: 'Physics', val: 'PHYSICS' },
+                    { label: 'Computer Science', val: 'COMPUTER SCIENCE' },
+                  ].map((sub) => (
+                    <label key={sub.val} className={`flex items-center gap-2 cursor-pointer ${subjectFilter === sub.val ? 'font-bold text-primary dark:text-indigo-400' : ''}`}>
+                      <input
+                        type="radio"
+                        name="subjectFilter"
+                        checked={subjectFilter === sub.val}
+                        onChange={() => setSubjectFilter(sub.val)}
+                        className="text-primary focus:ring-primary"
+                      />
+                      <span>{sub.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-3 border-t border-slate-100 dark:border-slate-700">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">DIFFICULTY</div>
+                <div className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {[
+                    { label: 'All Difficulties', val: 'ALL' },
+                    { label: 'Easy', val: 'Easy' },
+                    { label: 'Medium', val: 'Medium' },
+                    { label: 'Hard', val: 'Hard' }
+                  ].map((diff) => (
+                    <label key={diff.val} className={`flex items-center gap-2 cursor-pointer ${diffFilter === diff.val ? 'font-bold text-primary dark:text-indigo-400' : ''}`}>
+                      <input
+                        type="radio"
+                        name="diffFilter"
+                        checked={diffFilter === diff.val}
+                        onChange={() => setDiffFilter(diff.val)}
+                        className="text-primary focus:ring-primary"
+                      />
+                      <span>{diff.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-extrabold text-primary dark:text-white">Available Topics &amp; Practice Quizzes</h2>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Showing {filteredQuizzes.length} topic quizzes</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                {filteredQuizzes.map((item) => (
+                  <div key={item.id} className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-[10px] font-extrabold tracking-wider text-emerald-600 dark:text-emerald-400 uppercase">{item.subject}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${item.difficulty === 'Easy' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : item.difficulty === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-300'}`}>{item.difficulty}</span>
+                      </div>
+                      <h3 className="font-bold text-sm text-primary dark:text-white mb-4 leading-snug">{item.title}</h3>
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium">
+                        <span>❓ {item.questionsCount} Ques</span>
+                        <span>⏱️ {item.timeMinutes}m</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => startQuiz(item)}
+                      className="w-full bg-accentBtn text-primary font-bold text-xs py-2.5 rounded-btn hover:bg-opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      Start Quiz <span>▶</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function QuizInProgressScreen({
+      navigate,
+      quiz,
+      activeIdx,
+      setActiveIdx,
+      userAnswers,
+      setUserAnswers,
+      flaggedQuestions,
+      setFlaggedQuestions,
+      submitQuiz
+    }) {
+      const currentQ = quiz.questions[activeIdx];
+      const ansKey = `${quiz.id}_q${currentQ.id}`;
+      const selectedOption = userAnswers[ansKey] || null;
+      const isFlagged = !!flaggedQuestions[ansKey];
+
+      const initialSeconds = (quiz ? quiz.timeMinutes : 15) * 60;
+      const [timeLeft, setTimeLeft] = useState(initialSeconds);
+      const [isTimerPaused, setIsTimerPaused] = useState(false);
+      const [showTimeWarning, setShowTimeWarning] = useState(false);
+
+      useEffect(() => {
+        setTimeLeft(quiz ? quiz.timeMinutes * 60 : 900);
+        setIsTimerPaused(false);
+        setShowTimeWarning(false);
+      }, [quiz]);
+
+      useEffect(() => {
+        if (isTimerPaused || timeLeft <= 0) return;
+
+        const timerId = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev === 120) {
+              setShowTimeWarning(true);
+            }
+            if (prev <= 1) {
+              clearInterval(timerId);
+              setTimeout(() => submitQuiz(), 100);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => clearInterval(timerId);
+      }, [isTimerPaused, timeLeft]);
+
+      const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      };
+
+      const handleAddMinute = () => {
+        setTimeLeft(prev => prev + 60);
+      };
+
+      const handleResetTimer = () => {
+        setTimeLeft(initialSeconds);
+        setIsTimerPaused(false);
+      };
+
+      const handleSelectOption = (optId) => {
+        setUserAnswers({
+          ...userAnswers,
+          [ansKey]: optId
+        });
+      };
+
+      const handleToggleFlag = () => {
+        setFlaggedQuestions({
+          ...flaggedQuestions,
+          [ansKey]: !isFlagged
+        });
+      };
+
+      const currentQuizAnswered = quiz.questions.filter(q => !!userAnswers[`${quiz.id}_q${q.id}`]).length;
+      const progressPercent = Math.round(((activeIdx + 1) / quiz.questions.length) * 100);
+
+      return (
+        <div className="flex gap-8 items-start pt-4 pb-12">
+          <div className="w-60 bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm flex-shrink-0 space-y-6">
+            <h3 className="font-extrabold text-sm text-primary dark:text-indigo-400">Question Navigator</h3>
+
+            <div className="grid grid-cols-5 gap-2">
+              {quiz.questions.map((q, idx) => {
+                const qKey = `${quiz.id}_q${q.id}`;
+                const isCurrent = idx === activeIdx;
+                const isAns = !!userAnswers[qKey];
+                const isFlag = !!flaggedQuestions[qKey];
+
+                let bgClass = "bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300";
+                if (isAns) bgClass = "bg-accentBtn border-accent text-primary font-bold dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700";
+                if (isFlag) bgClass = "bg-amber-100 border-amber-300 text-amber-800 font-bold dark:bg-amber-950 dark:text-amber-300";
+                if (isCurrent) bgClass = "border-2 border-primary dark:border-indigo-400 text-primary dark:text-white font-extrabold bg-white dark:bg-slate-800 ring-2 ring-primary/20 shadow-sm";
+
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setActiveIdx(idx)}
+                    className={`h-9 rounded-btn text-xs flex items-center justify-center transition-all ${bgClass}`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2.5 pt-4 border-t border-slate-100 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded bg-accentBtn border border-accent inline-block"></span>
+                <span>Answered ({currentQuizAnswered})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block"></span>
+                <span>Flagged ({Object.keys(flaggedQuestions).filter(k => k.startsWith(quiz.id) && flaggedQuestions[k]).length})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded bg-slate-50 border border-slate-200 inline-block"></span>
+                <span>Unanswered ({quiz.questions.length - currentQuizAnswered})</span>
+              </div>
+            </div>
+
+            {/* Timer Utility Box */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">TIMER CONTROLS</div>
+              <div className="flex gap-2 text-xs">
+                <button
+                  onClick={handleAddMinute}
+                  className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-1.5 rounded-md font-semibold text-[11px] border border-slate-200 dark:border-slate-600 transition-colors"
+                >
+                  +1 Min
+                </button>
+                <button
+                  onClick={handleResetTimer}
+                  className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-1.5 rounded-md font-semibold text-[11px] border border-slate-200 dark:border-slate-600 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-6">
+            <div className="bg-white dark:bg-slate-800 rounded-card p-4 border border-borderClr dark:border-slate-700 shadow-sm flex items-center justify-between px-8">
+              <div className="flex items-center gap-6 flex-1 mr-8">
+                <span className="font-bold text-xs text-primary dark:text-indigo-300 whitespace-nowrap">Question {activeIdx + 1} of {quiz.questions.length}</span>
+                <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                  <div className="bg-accent dark:bg-indigo-500 h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>
+                </div>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">{progressPercent}% Progress</span>
+              </div>
+
+              <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all ${timeLeft <= 60
+                  ? 'bg-red-100 text-red-700 border-red-300 dark:bg-red-950 dark:text-red-300 animate-pulse'
+                  : timeLeft <= 180
+                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300'
+                    : 'bg-red-50 text-red-600 border-red-100 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600'
+                }`}>
+                <span>⏱️</span>
+                <span className="font-mono text-sm tracking-wide">{formatTime(timeLeft)}</span>
+                <button
+                  onClick={() => setIsTimerPaused(!isTimerPaused)}
+                  className="ml-1 px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 text-[10px] font-bold shadow-xs transition-colors"
+                >
+                  {isTimerPaused ? '▶ Play' : '⏸ Pause'}
+                </button>
+              </div>
+            </div>
+
+            {showTimeWarning && (
+              <div className="bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between">
+                <span>⚠️ Less than 2 minutes remaining! Review your flagged answers before submitting.</span>
+                <button onClick={() => setShowTimeWarning(false)} className="text-amber-800 dark:text-amber-300 font-bold hover:underline ml-4">Dismiss</button>
+              </div>
+            )}
+
+            <div className="bg-white dark:bg-slate-800 rounded-card p-8 border border-borderClr dark:border-slate-700 shadow-sm space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase">
+                  {quiz.subject} &gt; {quiz.category}
+                </div>
+                {isFlagged && (
+                  <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-700">
+                    🚩 Flagged for Review
+                  </span>
+                )}
+              </div>
+
+              <h2 className="text-base font-bold text-primary dark:text-white leading-relaxed">
+                {currentQ.question}
+              </h2>
+
+              <div className="space-y-3 pt-2">
+                {currentQ.options.map((opt) => {
+                  const isSelected = selectedOption === opt.id;
+                  return (
+                    <div
+                      key={opt.id}
+                      onClick={() => handleSelectOption(opt.id)}
+                      className={`p-4 rounded-card border transition-all cursor-pointer flex items-center gap-4 ${isSelected ? 'border-primary dark:border-indigo-400 bg-indigo-50/40 dark:bg-indigo-950/40 ring-1 ring-primary dark:ring-indigo-400' : 'border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'}`}
+                    >
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-primary dark:bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                        {opt.id}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{opt.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <button
+                disabled={activeIdx === 0}
+                onClick={() => setActiveIdx(activeIdx - 1)}
+                className={`border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-5 py-2.5 rounded-btn text-xs font-semibold flex items-center gap-1.5 ${activeIdx === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+              >
+                <span>←</span> Previous Question
+              </button>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleToggleFlag}
+                  className={`border px-5 py-2.5 rounded-btn text-xs font-semibold flex items-center gap-1.5 transition-colors ${isFlagged ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-300 font-bold' : 'border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                  🚩 {isFlagged ? 'Unflag Question' : 'Flag for Review'}
+                </button>
+
+                {activeIdx < quiz.questions.length - 1 ? (
+                  <button
+                    onClick={() => setActiveIdx(activeIdx + 1)}
+                    className="bg-primary dark:bg-indigo-600 text-white px-6 py-2.5 rounded-btn text-xs font-bold hover:bg-opacity-95 shadow flex items-center gap-1.5"
+                  >
+                    Next Question <span>→</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={submitQuiz}
+                    className="bg-emerald-600 text-white px-6 py-2.5 rounded-btn text-xs font-bold hover:bg-emerald-700 shadow flex items-center gap-1.5"
+                  >
+                    Finish &amp; Submit Quiz <span>✓</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function QuizResultsScreen({ navigate, results, startQuiz, quiz }) {
+      const activeResults = results || {
+        quiz: quiz || QUIZ_DATABASE[1],
+        userAnswers: { 'chem-1_q1': 'B', 'chem-1_q2': 'B', 'chem-1_q3': 'C', 'chem-1_q4': 'B', 'chem-1_q5': 'A' },
+        correctCount: 5,
+        total: 5,
+        percent: 100,
+        date: 'Today'
+      };
+
+      const { quiz: currentQuiz, userAnswers, correctCount, total, percent, date } = activeResults;
+
+      return (
+        <div className="space-y-8 pb-12">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-extrabold text-primary dark:text-white">{currentQuiz.title} Results</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Attempted on {date} • {currentQuiz.subject}</p>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => startQuiz(currentQuiz)}
+                className="border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-btn text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm"
+              >
+                🔄 Retry Quiz
+              </button>
+              <button
+                onClick={() => navigate('/quizzes')}
+                className="bg-primary dark:bg-indigo-600 text-white px-4 py-2 rounded-btn text-xs font-bold hover:bg-opacity-95 shadow flex items-center gap-1.5"
+              >
+                📚 Choose Another Topic
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            <div className="bg-white dark:bg-slate-800 rounded-card p-8 border border-borderClr dark:border-slate-700 shadow-sm flex items-center gap-8">
+              <div className="relative w-32 h-32 flex items-center justify-center flex-shrink-0">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-slate-100 dark:text-slate-700" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path className="text-primary dark:text-indigo-400" strokeDasharray={`${percent}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div className="absolute text-center">
+                  <span className="text-2xl font-black text-primary dark:text-white block leading-none">{percent}%</span>
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Grade</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-extrabold text-primary dark:text-white">
+                  {percent >= 70 ? 'Passed successfully! 🎉' : 'Keep practicing! 💪'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                  You answered {correctCount} out of {total} questions correctly.
+                </p>
+                <div className="flex gap-4 pt-2 text-xs font-bold">
+                  <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><span className="w-2.5 h-2.5 rounded bg-emerald-500"></span> {correctCount} Correct</span>
+                  <span className="flex items-center gap-1.5 text-red-500"><span className="w-2.5 h-2.5 rounded bg-red-500"></span> {total - correctCount} Incorrect</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-card p-8 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+              <h3 className="font-extrabold text-sm text-primary dark:text-indigo-400">Breakdown by Topic</h3>
+
+              <div className="space-y-3 pt-1">
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-slate-700 dark:text-slate-300">{currentQuiz.category} Core Principles</span>
+                    <span className="text-primary dark:text-indigo-400 font-bold">{percent}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-accent dark:bg-indigo-500 h-full rounded-full" style={{ width: `${percent}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-slate-700 dark:text-slate-300">Problem Solving &amp; Application</span>
+                    <span className="text-primary dark:text-indigo-400 font-bold">100%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-accent dark:bg-indigo-500 h-full rounded-full" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-extrabold text-base text-primary dark:text-white">Question &amp; Answer Review</h3>
+
+            {currentQuiz.questions.map((q, idx) => {
+              const uAns = userAnswers[`${currentQuiz.id}_q${q.id}`];
+              const isCorrect = uAns === q.correctOption;
+              const uAnsText = q.options.find(o => o.id === uAns)?.text || 'No answer selected';
+              const correctText = q.options.find(o => o.id === q.correctOption)?.text;
+
+              return (
+                <div key={q.id} className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${isCorrect ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-300'}`}>
+                        {isCorrect ? '✓' : '✕'}
+                      </span>
+                      <span className="font-bold text-xs text-primary dark:text-white">Question {idx + 1}</span>
+                    </div>
+                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded ${isCorrect ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'}`}>
+                      {isCorrect ? 'CORRECT' : 'INCORRECT'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{q.question}</p>
+
+                  <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg space-y-1 text-xs border border-slate-100 dark:border-slate-700">
+                    <div className={`font-semibold ${isCorrect ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      Your Answer: ({uAns || 'None'}) {uAnsText}
+                    </div>
+                    {!isCorrect && (
+                      <div className="font-semibold text-emerald-700 dark:text-emerald-400 pt-1">
+                        Correct Answer: ({q.correctOption}) {correctText}
+                      </div>
+                    )}
+                    <div className="text-slate-600 dark:text-slate-300 pt-1">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">AI Explanation:</span> {q.explanation}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function FlashcardsCreateScreen({ navigate, flashcardDecks, setFlashcardDecks, setCurrentDeck }) {
+      const [notesText, setNotesText] = useState("Cell biology notes: Cellular organelles are specialized structures within a cell that perform specific tasks. The mitochondria is known as the powerhouse because it performs cellular respiration to generate ATP. Ribosomes are the sites of protein synthesis...");
+      const [deckSubject, setDeckSubject] = useState("BIOLOGY");
+      const [deckTitle, setDeckTitle] = useState("Biology: Cell Organelles");
+      const [isGenerating, setIsGenerating] = useState(false);
+
+      const [editableCards, setEditableCards] = useState([
+        { id: 'c1', front: "Mitochondria", back: "Powerhouse of the cell; produces ATP via cellular respiration." },
+        { id: 'c2', front: "Ribosomes", back: "Protein synthesis machinery of the cell." },
+        { id: 'c3', front: "Nucleolus", back: "Produces and assembles ribosomes in eukaryotic nucleus." },
+        { id: 'c4', front: "Lysosome", back: "Contains hydrolytic enzymes to digest waste and macromolecules." }
+      ]);
+
+      const [editingCardId, setEditingCardId] = useState(null);
+      const [editFrontText, setEditFrontText] = useState('');
+      const [editBackText, setEditBackText] = useState('');
+
+      const handleGenerateDeck = () => {
+        setIsGenerating(true);
+        setTimeout(() => {
+          setIsGenerating(false);
+          const newDeckObj = {
+            id: 'deck-' + Date.now(),
+            title: deckTitle,
+            subject: deckSubject,
+            cards: editableCards
+          };
+          setFlashcardDecks(prev => [newDeckObj, ...prev]);
+          setCurrentDeck(newDeckObj);
+          navigate('/flashcard-study');
+        }, 1200);
+      };
+
+      const handleAddCard = () => {
+        const newCard = {
+          id: 'c-' + Date.now(),
+          front: "New Term " + (editableCards.length + 1),
+          back: "Explanation / definition for term."
+        };
+        setEditableCards([...editableCards, newCard]);
+      };
+
+      const handleDeleteCard = (id) => {
+        setEditableCards(editableCards.filter(c => c.id !== id));
+      };
+
+      const handleStartRenameCard = (card) => {
+        setEditingCardId(card.id);
+        setEditFrontText(card.front);
+        setEditBackText(card.back);
+      };
+
+      const handleSaveRenameCard = (cardId) => {
+        setEditableCards(editableCards.map(c => c.id === cardId ? { ...c, front: editFrontText, back: editBackText } : c));
+        setEditingCardId(null);
+      };
+
+      return (
+        <div className="space-y-6 pb-12">
+          <div className="flex gap-8 items-start">
+            <div className="w-[420px] bg-white dark:bg-slate-800 rounded-card p-8 border border-borderClr dark:border-slate-700 shadow-sm space-y-6 flex-shrink-0">
+              <div>
+                <h2 className="text-lg font-extrabold text-primary dark:text-white mb-1 flex items-center gap-2">
+                  <img src="logo_icon.png" alt="Icon" className="w-6 h-6 object-contain" />
+                  Create New Flashcards
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Paste notes, select options, and let AI build customized learning decks.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">DECK TITLE</label>
+                  <input
+                    type="text"
+                    value={deckTitle}
+                    onChange={(e) => setDeckTitle(e.target.value)}
+                    className="w-full p-2.5 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs font-semibold focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">PASTE STUDY NOTES / SYLLABUS</label>
+                  <textarea
+                    rows="5"
+                    value={notesText}
+                    onChange={(e) => setNotesText(e.target.value)}
+                    className="w-full p-3 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:border-primary leading-relaxed resize-none bg-slate-50/50 dark:bg-slate-900/50"
+                  ></textarea>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">SUBJECT</label>
+                    <select
+                      value={deckSubject}
+                      onChange={(e) => setDeckSubject(e.target.value)}
+                      className="w-full p-2.5 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs font-semibold focus:outline-none focus:border-primary"
+                    >
+                      <option value="BIOLOGY">Biology</option>
+                      <option value="CHEMISTRY">Chemistry</option>
+                      <option value="PHYSICS">Physics</option>
+                      <option value="MATHEMATICS">Mathematics</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">FOCUS AREA</label>
+                    <select className="w-full p-2.5 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs font-semibold focus:outline-none focus:border-primary">
+                      <option>Definitions</option>
+                      <option>Processes</option>
+                      <option>Key Formulas</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleGenerateDeck}
+                  disabled={isGenerating}
+                  className="w-full bg-primary dark:bg-indigo-600 text-white py-3 rounded-btn font-bold text-xs hover:bg-opacity-95 shadow flex items-center justify-center gap-2"
+                >
+                  <span>✨</span> {isGenerating ? 'Generating Deck...' : 'Generate & Start Study'}
+                </button>
+
+                {isGenerating && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 p-3 rounded-btn text-xs flex items-center gap-2 border border-emerald-100 dark:border-emerald-800 animate-pulse">
+                    <span>⚙️</span>
+                    <span>AI is currently processing your notes (Estimated 2s)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-extrabold text-primary dark:text-white">{deckTitle}</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Previewing {editableCards.length} generated cards</p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={handleAddCard} className="border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-btn text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm flex items-center gap-1.5">
+                    ➕ Add Card
+                  </button>
+                  <button onClick={handleGenerateDeck} className="bg-primary dark:bg-indigo-600 text-white px-4 py-2 rounded-btn text-xs font-bold hover:bg-opacity-95 shadow flex items-center gap-1.5">
+                    💾 Save Deck
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {editableCards.map((card, i) => {
+                  const isEditingThisCard = editingCardId === card.id;
+                  return (
+                    <div key={card.id} className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm flex flex-col justify-between items-center text-center relative group hover:border-slate-300 dark:hover:border-slate-600 transition-all min-h-[170px]">
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">CARD {i + 1}</span>
+
+                      {isEditingThisCard ? (
+                        <div className="w-full my-2 space-y-2">
+                          <input
+                            type="text"
+                            value={editFrontText}
+                            onChange={(e) => setEditFrontText(e.target.value)}
+                            placeholder="Front text / term"
+                            className="w-full p-1.5 text-xs font-bold border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 text-primary dark:text-white"
+                          />
+                          <input
+                            type="text"
+                            value={editBackText}
+                            onChange={(e) => setEditBackText(e.target.value)}
+                            placeholder="Back text / definition"
+                            className="w-full p-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+                          />
+                          <button
+                            onClick={() => handleSaveRenameCard(card.id)}
+                            className="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-emerald-700 shadow"
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="my-2 space-y-1">
+                          <h3 className="text-base font-bold text-primary dark:text-white">{card.front}</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{card.back}</p>
+                        </div>
+                      )}
+
+                      {!isEditingThisCard && (
+                        <div className="flex gap-4 text-slate-400 text-xs pt-2">
+                          <button onClick={() => handleStartRenameCard(card)} className="hover:text-primary dark:hover:text-white font-semibold">✏️ Rename</button>
+                          <button onClick={() => handleDeleteCard(card.id)} className="hover:text-red-500 font-semibold">🗑️ Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function FlashcardStudyScreen({ navigate, currentDeck, setCurrentDeck, flashcardDecks, setFlashcardDecks, deckCardIndex, setDeckCardIndex }) {
+      const [isFlipped, setIsFlipped] = useState(false);
+
+      const [sessionSeconds, setSessionSeconds] = useState(0);
+      const [isTimerActive, setIsTimerActive] = useState(true);
+
+      const [isRenamingDeck, setIsRenamingDeck] = useState(false);
+      const [deckTitleInput, setDeckTitleInput] = useState(currentDeck ? currentDeck.title : '');
+
+      const [isRenamingCard, setIsRenamingCard] = useState(false);
+      const [renamedFront, setRenamedFront] = useState('');
+      const [renamedBack, setRenamedBack] = useState('');
+
+      const cards = currentDeck ? currentDeck.cards : DEFAULT_DECKS[0].cards;
+      const currentCard = cards[deckCardIndex] || cards[0];
+
+      useEffect(() => {
+        if (!isTimerActive) return;
+        const interval = setInterval(() => {
+          setSessionSeconds(sec => sec + 1);
+        }, 1000);
+        return () => clearInterval(interval);
+      }, [isTimerActive]);
+
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (isRenamingCard || isRenamingDeck) return;
+          if (e.code === 'Space') {
+            e.preventDefault();
+            setIsFlipped(prev => !prev);
+          } else if (e.key === '1') {
+            handleNextCard();
+          } else if (e.key === '2') {
+            handleNextCard();
+          } else if (e.key === '3') {
+            handleNextCard();
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [deckCardIndex, cards.length, isRenamingCard, isRenamingDeck]);
+
+      const formatSessionTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      };
+
+      const handleNextCard = () => {
+        setIsFlipped(false);
+        setDeckCardIndex((deckCardIndex + 1) % cards.length);
+      };
+
+      const handlePrevCard = () => {
+        setIsFlipped(false);
+        setDeckCardIndex((deckCardIndex - 1 + cards.length) % cards.length);
+      };
+
+      const handleOpenCardRename = () => {
+        setRenamedFront(currentCard.front);
+        setRenamedBack(currentCard.back);
+        setIsRenamingCard(true);
+      };
+
+      const handleSaveCardRename = () => {
+        const updatedCards = cards.map((c, idx) => idx === deckCardIndex ? { ...c, front: renamedFront, back: renamedBack } : c);
+        const updatedDeck = { ...currentDeck, cards: updatedCards };
+        setCurrentDeck(updatedDeck);
+        setFlashcardDecks(flashcardDecks.map(d => d.id === currentDeck.id ? updatedDeck : d));
+        setIsRenamingCard(false);
+      };
+
+      const handleSaveDeckRename = () => {
+        const updatedDeck = { ...currentDeck, title: deckTitleInput };
+        setCurrentDeck(updatedDeck);
+        setFlashcardDecks(flashcardDecks.map(d => d.id === currentDeck.id ? updatedDeck : d));
+        setIsRenamingDeck(false);
+      };
+
+      return (
+        <div className="flex gap-8 items-start pt-4 pb-12">
+          <div className="w-60 bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-6 flex-shrink-0">
+            <h3 className="font-extrabold text-sm text-primary dark:text-indigo-400 flex items-center gap-2">
+              <img src="logo_icon.png" alt="Icon" className="w-5 h-5 object-contain" />
+              Study Progress
+            </h3>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Cards Mastered</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{deckCardIndex + 1} / {cards.length}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Remaining</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">{cards.length - (deckCardIndex + 1)} Cards</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Study Streak</span>
+                <span className="font-bold text-amber-500">8 Days 🔥</span>
+              </div>
+            </div>
+
+            {/* Session Timer */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SESSION TIMER</div>
+              <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg border border-slate-200 dark:border-slate-600 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs">⏱️</span>
+                  <span className="font-mono text-xs font-bold text-primary dark:text-white">{formatSessionTime(sessionSeconds)}</span>
+                </div>
+                <button
+                  onClick={() => setIsTimerActive(!isTimerActive)}
+                  className="text-[10px] font-bold px-2 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                >
+                  {isTimerActive ? 'Pause' : 'Resume'}
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">KEYBOARD SHORTCUTS</div>
+              <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                <div className="flex justify-between items-center">
+                  <span>Flip card</span>
+                  <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">Space</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Mark Hard</span>
+                  <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">1</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Mark Medium</span>
+                  <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">2</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Mark Easy</span>
+                  <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-6">
+            <div className="flex justify-between items-center">
+              {isRenamingDeck ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={deckTitleInput}
+                    onChange={(e) => setDeckTitleInput(e.target.value)}
+                    className="px-3 py-1 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-base font-bold rounded"
+                  />
+                  <button onClick={handleSaveDeckRename} className="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">Save Title</button>
+                  <button onClick={() => setIsRenamingDeck(false)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-extrabold text-primary dark:text-white">{currentDeck.title}</h2>
+                  <button onClick={() => { setDeckTitleInput(currentDeck.title); setIsRenamingDeck(true); }} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold">✏️ Rename Deck</button>
+                </div>
+              )}
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Card {deckCardIndex + 1} of {cards.length}</span>
+            </div>
+
+            <div
+              onClick={() => !isRenamingCard && setIsFlipped(!isFlipped)}
+              className="bg-white dark:bg-slate-800 rounded-card p-12 border border-borderClr dark:border-slate-700 shadow-xl min-h-[340px] flex flex-col justify-between items-center text-center relative cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-all select-none"
+            >
+              <div className="w-full flex justify-between items-center">
+                <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                  {isFlipped ? 'BACK (ANSWER)' : 'FRONT (QUESTION)'}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleOpenCardRename(); }}
+                  className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline bg-indigo-50 dark:bg-indigo-950 px-2.5 py-1 rounded-md"
+                >
+                  ✏️ Rename Flashcard
+                </button>
+              </div>
+
+              {isRenamingCard ? (
+                <div className="w-full max-w-lg my-4 space-y-3 bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">Rename Card Term &amp; Answer</h4>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 text-left mb-1">FRONT (QUESTION / TERM)</label>
+                    <input
+                      type="text"
+                      value={renamedFront}
+                      onChange={(e) => setRenamedFront(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white text-xs font-semibold rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 text-left mb-1">BACK (ANSWER / DEFINITION)</label>
+                    <textarea
+                      rows="3"
+                      value={renamedBack}
+                      onChange={(e) => setRenamedBack(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white text-xs rounded leading-relaxed resize-none"
+                    ></textarea>
+                  </div>
+                  <div className="flex gap-2 justify-end pt-1">
+                    <button onClick={() => setIsRenamingCard(false)} className="px-3 py-1.5 rounded text-xs text-slate-500 font-semibold">Cancel</button>
+                    <button onClick={handleSaveCardRename} className="bg-emerald-600 text-white px-4 py-1.5 rounded text-xs font-bold shadow">Save Changes</button>
+                  </div>
+                </div>
+              ) : (
+                <h2 className="text-2xl font-bold text-primary dark:text-white max-w-xl leading-relaxed my-6">
+                  {isFlipped ? currentCard.back : currentCard.front}
+                </h2>
+              )}
+
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsFlipped(!isFlipped); }}
+                className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold px-4 py-2 rounded-btn flex items-center gap-2 border border-slate-200 dark:border-slate-600 transition-all"
+              >
+                🔄 Click card to flip
+              </button>
+            </div>
+
+            <div className="text-center space-y-3 pt-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">How well did you know this card?</span>
+
+              <div className="flex justify-center gap-4 max-w-md mx-auto">
+                <button
+                  onClick={handleNextCard}
+                  className="flex-1 border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-btn text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <span>☹️</span> Hard
+                </button>
+                <button
+                  onClick={handleNextCard}
+                  className="flex-1 border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-btn text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <span>😐</span> Medium
+                </button>
+                <button
+                  onClick={handleNextCard}
+                  className="flex-1 bg-primary dark:bg-indigo-600 text-white py-3 rounded-btn text-xs font-bold flex items-center justify-center gap-2 shadow"
+                >
+                  <span>😊</span> Easy
+                </button>
+              </div>
+
+              <div className="flex justify-between items-center pt-4 max-w-md mx-auto">
+                <button onClick={handlePrevCard} className="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-semibold">← Previous Card</button>
+                <button onClick={handleNextCard} className="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-semibold">Next Card →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ProfileScreen({ navigate, user, setUser, isDarkMode, setIsDarkMode, quizHistory, flashcardDecks }) {
+      const [isEditing, setIsEditing] = useState(false);
+      const [editName, setEditName] = useState(user.name);
+      const [editEmail, setEditEmail] = useState(user.email);
+
+      const baseQuizzesCount = 42;
+      const totalQuizzesTaken = baseQuizzesCount + quizHistory.length - 2;
+
+      const initialSum = 86.5 * baseQuizzesCount;
+      const newScoresSum = quizHistory.slice(2).reduce((acc, item) => acc + item.percent, 0);
+      const avgScore = ((initialSum + newScoresSum) / totalQuizzesTaken).toFixed(1);
+
+      const activeDecksCount = flashcardDecks.length;
+
+      const activityData = [
+        { day: 'Mon', hours: 2.1, active: false },
+        { day: 'Tue', hours: 3.5, active: true },
+        { day: 'Wed', hours: 1.2, active: false },
+        { day: 'Thu', hours: 2.3, active: false },
+        { day: 'Fri', hours: 4.2, active: true },
+        { day: 'Sat', hours: 1.0, active: false },
+        { day: 'Sun', hours: 1.2 + (quizHistory.length - 2) * 0.3, active: true },
+      ];
+
+      const handleSaveProfile = () => {
+        setUser(prev => ({
+          ...prev,
+          name: editName,
+          email: editEmail
+        }));
+        setIsEditing(false);
+      };
+
+      return (
+        <div className="space-y-6 pb-12">
+          <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-amber-700 flex items-center justify-center text-white text-xl font-bold border-2 border-slate-300 dark:border-slate-600 shadow-sm">
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <img src="logo_icon.png" alt="Icon" className="w-7 h-7 object-contain" />
+                  <h1 className="text-xl font-extrabold text-primary dark:text-white">{user.name}</h1>
+                  <span className="text-[10px] font-extrabold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 px-2 py-0.5 rounded uppercase">PRO MEMBER</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">{user.email}</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-btn text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm flex items-center gap-1.5"
+            >
+              ✏️ {isEditing ? 'Cancel' : 'Edit Profile'}
+            </button>
+          </div>
+
+          {isEditing && (
+            <div className="bg-slate-50 dark:bg-slate-800/80 p-6 rounded-card border border-slate-200 dark:border-slate-700 space-y-4">
+              <h3 className="font-extrabold text-sm text-primary dark:text-white">Edit Student Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs"
+                  />
+                </div>
+              </div>
+              <button onClick={handleSaveProfile} className="bg-primary dark:bg-indigo-600 text-white px-5 py-2 rounded-btn text-xs font-bold">Save Changes</button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-6">
+            <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-2">
+              <div className="flex justify-between items-start">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">TOTAL QUIZZES TAKEN</span>
+                <span className="text-indigo-600 bg-indigo-50 dark:bg-indigo-950 p-1.5 rounded-lg text-xs">🏅</span>
+              </div>
+              <div className="text-3xl font-black text-primary dark:text-white">{totalQuizzesTaken}</div>
+              <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">↑ Updated after submission</div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-2">
+              <div className="flex justify-between items-start">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">AVERAGE SCORE</span>
+                <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950 p-1.5 rounded-lg text-xs">📈</span>
+              </div>
+              <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{avgScore}%</div>
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Top 5% of class</div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-2">
+              <div className="flex justify-between items-start">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">DECKS CREATED</span>
+                <span className="text-amber-600 bg-amber-50 dark:bg-amber-950 p-1.5 rounded-lg text-xs">📚</span>
+              </div>
+              <div className="text-3xl font-black text-primary dark:text-white">{activeDecksCount}</div>
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Active study decks</div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-2">
+              <div className="flex justify-between items-start">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">STUDY STREAK</span>
+                <span className="text-amber-500 bg-amber-50 dark:bg-amber-950 p-1.5 rounded-lg text-xs">⚡</span>
+              </div>
+              <div className="text-3xl font-black text-amber-500">8 Days</div>
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Personal best: 14 days</div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-extrabold text-sm text-primary dark:text-white">Learning Activity (Study Hours per Day)</h3>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">This week: {(14.5 + (quizHistory.length - 2) * 0.3).toFixed(1)} hrs total</span>
+            </div>
+
+            <div className="h-44 w-full pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={activityData}>
+                  <XAxis dataKey="day" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
+                  <Bar dataKey="hours" radius={[4, 4, 0, 0]}>
+                    {activityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.active ? (isDarkMode ? '#818CF8' : '#6366F1') : (isDarkMode ? '#334155' : '#475569')} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6">
+            <div className="col-span-2 bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-extrabold text-sm text-primary dark:text-white">Recent Activity</h3>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Live Profile Sync Active</span>
+              </div>
+
+              <div className="space-y-3">
+                {quizHistory.map((item) => (
+                  <div key={item.id} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl flex justify-between items-center border border-slate-100 dark:border-slate-700 transition-all hover:border-slate-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs font-bold">🏅</div>
+                      <div>
+                        <div className="font-bold text-xs text-slate-800 dark:text-slate-200">{item.title}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">Completed {item.date} • {item.subject}</div>
+                      </div>
+                    </div>
+                    <span className="font-bold text-xs text-emerald-600 dark:text-emerald-400">{item.percent}% Correct</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+                <h3 className="font-extrabold text-sm text-primary dark:text-white">Achievements &amp; Badges</h3>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs">🔥</div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-800 dark:text-slate-200">7-Day Streak</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Active 7 days consecutively</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">🛡️</div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-800 dark:text-slate-200">Quiz Master</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Aced {quizHistory.length} quizzes</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+                <h3 className="font-extrabold text-sm text-primary dark:text-white">Account Settings</h3>
+
+                <div className="space-y-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <div className="flex justify-between items-center">
+                    <span>Email Notifications</span>
+                    <input type="checkbox" defaultChecked className="rounded text-primary focus:ring-primary w-4 h-4" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Dark Mode Theme</span>
+                    <input
+                      type="checkbox"
+                      checked={isDarkMode}
+                      onChange={(e) => setIsDarkMode(e.target.checked)}
+                      className="rounded text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <button onClick={() => navigate('/login')} className="w-full border border-red-200 text-red-600 dark:border-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 py-2.5 rounded-btn font-bold text-xs transition-colors mt-2">
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+
+</html>
