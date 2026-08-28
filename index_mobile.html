@@ -712,11 +712,16 @@
       };
 
       const startQuiz = (quizObj) => {
+        localStorage.removeItem(`quiz_progress_${quizObj.id}`);
         setSelectedQuiz(quizObj);
         setActiveQuestionIdx(0);
         setQuizResults(null);
         setUserAnswers({});
         setFlaggedQuestions({});
+        window.scrollTo(0, 0);
+        document.querySelectorAll('.overflow-y-auto, main, #app-container').forEach((container) => {
+          container.scrollTop = 0;
+        });
         navigate('/quiz/7');
       };
 
@@ -1797,6 +1802,13 @@
       const [timeLeft, setTimeLeft] = useState(initialSeconds);
       const [isTimerPaused, setIsTimerPaused] = useState(false);
       const [showTimeWarning, setShowTimeWarning] = useState(false);
+
+      useEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        document.querySelectorAll('.overflow-y-auto, main, #app-container').forEach((container) => {
+          container.scrollTop = 0;
+        });
+      }, []);
 
       // Keep a stable ref to submitQuiz to avoid stale closure inside the interval
       const submitQuizRef = useRef(submitQuiz);

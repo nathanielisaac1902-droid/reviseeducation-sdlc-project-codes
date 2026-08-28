@@ -719,6 +719,11 @@
       };
 
       const startQuiz = (quizObj) => {
+        try {
+          localStorage.removeItem(`quiz_progress_${quizObj.id}`);
+        } catch (error) {
+          // Storage may be unavailable in private browsing.
+        }
         setSelectedQuiz(quizObj);
         setActiveQuestionIdx(0);
         setQuizResults(null);
