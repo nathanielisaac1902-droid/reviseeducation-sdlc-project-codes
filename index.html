@@ -53,7 +53,7 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      min-width: 1100px;
+      min-width: 0;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
@@ -74,7 +74,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const {
-      ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell
+      ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, LabelList
     } = Recharts;
 
     const QUIZ_DATABASE = [
@@ -777,7 +777,7 @@
           <main className={`flex-1 ${!isAuthPage ? 'pt-20 pb-16 max-w-[1440px] mx-auto px-8 w-full' : 'flex items-center justify-center py-12'}`}>
             {currentRoute === '/login' && <LoginScreen navigate={navigate} setUser={setUser} setIsAuthenticatedState={setIsAuthenticatedState} />}
             {currentRoute === '/signup' && <SignUpScreen navigate={navigate} setUser={setUser} setIsAuthenticatedState={setIsAuthenticatedState} />}
-            {currentRoute === '/dashboard' && <DashboardScreen navigate={navigate} startQuiz={startQuiz} user={user} />}
+            {currentRoute === '/dashboard' && <DashboardScreen navigate={navigate} startQuiz={startQuiz} user={user} isDarkMode={isDarkMode} />}
             {currentRoute === '/quizzes' && <QuizzesScreen navigate={navigate} startQuiz={startQuiz} />}
             {currentRoute === '/quiz/7' && (
               <QuizInProgressScreen
@@ -1375,7 +1375,113 @@
       );
     }
 
-    function DashboardScreen({ navigate, startQuiz, user }) {
+    function StudyHoursChart({ isDarkMode }) {
+      const days = [
+        { key: 'Mon', name: 'Monday' },
+        { key: 'Tue', name: 'Tuesday' },
+        { key: 'Wed', name: 'Wednesday' },
+        { key: 'Thu', name: 'Thursday' },
+        { key: 'Fri', name: 'Friday' },
+        { key: 'Sat', name: 'Saturday' },
+        { key: 'Sun', name: 'Sunday' }
+      ];
+      const storageKey = 'revisesphere-study-hours';
+      // Keep one entry for every weekday so days with no sessions still render as 0h.
+      const defaultHours = [
+        { day: 'Mon', hours: 1.5 }, { day: 'Tue', hours: 2.5 },
+        { day: 'Wed', hours: 0 }, { day: 'Thu', hours: 3 },
+        { day: 'Fri', hours: 2 }, { day: 'Sat', hours: 0 },
+        { day: 'Sun', hours: 1 }
+      ];
+      const [studyHours, setStudyHours] = useState(() => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey));
+          return Array.isArray(saved) ? saved : defaultHours;
+        } catch (error) {
+          return defaultHours;
+        }
+      });
+      const [isFormOpen, setIsFormOpen] = useState(false);
+      const [sessionHours, setSessionHours] = useState('1');
+      const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+      // Persist every chart update so logged sessions survive a page reload.
+      useEffect(() => {
+        localStorage.setItem(storageKey, JSON.stringify(studyHours));
+      }, [studyHours]);
+
+      const chartData = days.map((day) => ({
+        ...day,
+        hours: Number(studyHours.find((entry) => entry.day === day.key)?.hours || 0)
+      }));
+      const totalHours = chartData.reduce((total, entry) => total + entry.hours, 0);
+      const maxHours = Math.max(...chartData.map((entry) => entry.hours), 0);
+      const yAxisMax = Math.max(5, Math.ceil(maxHours));
+      const yAxisTicks = Array.from({ length: yAxisMax + 1 }, (_, index) => index);
+
+      const handleLogSession = (event) => {
+        event.preventDefault();
+        const hours = Number(sessionHours);
+        if (!sessionDate || !Number.isFinite(hours) || hours <= 0) return;
+        const date = new Date(`${sessionDate}T12:00:00`);
+        const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
+        const loggedDay = days[dayIndex];
+        setStudyHours((currentHours) => currentHours.map((entry) => (
+          entry.day === loggedDay.key ? { ...entry, hours: Number((entry.hours + hours).toFixed(2)) } : entry
+        )));
+        setIsFormOpen(false);
+        setSessionHours('1');
+      };
+
+      const renderTooltip = ({ active, payload }) => {
+        if (!active || !payload || !payload.length) return null;
+        const entry = payload[0].payload;
+        return <div className="bg-slate-900 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-semibold" role="status">{entry.name}: {entry.hours} hours</div>;
+      };
+
+      return (
+        <section className="bg-white dark:bg-slate-800 rounded-card p-4 sm:p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4" aria-label="Study hours per day tracker">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h2 className="font-extrabold text-base text-primary dark:text-white">Study Hours per Day</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Your weekly study duration at a glance.</p>
+            </div>
+            <div className="flex items-center justify-between sm:justify-end gap-4">
+              <div className="text-left sm:text-right"><span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total this week</span><strong className="text-xl text-primary dark:text-white">{totalHours.toFixed(1)}h</strong></div>
+              <button type="button" onClick={() => setIsFormOpen(!isFormOpen)} aria-expanded={isFormOpen} aria-controls="study-session-form" className="bg-accentBtn text-primary font-bold text-xs px-3 py-2 rounded-btn hover:bg-opacity-90 transition-all shadow-sm whitespace-nowrap">+ Log Study Session</button>
+            </div>
+          </div>
+
+          {isFormOpen && (
+            <form id="study-session-form" onSubmit={handleLogSession} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700" aria-label="Log study session form">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Hours<input type="number" min="0.25" step="0.25" value={sessionHours} onChange={(event) => setSessionHours(event.target.value)} aria-label="Study hours" className="mt-1 w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-btn font-normal" required /></label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Date<input type="date" value={sessionDate} onChange={(event) => setSessionDate(event.target.value)} aria-label="Study session date" className="mt-1 w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-btn font-normal" required /></label>
+              <button type="submit" className="self-end bg-primary dark:bg-indigo-600 text-white px-4 py-2 rounded-btn text-xs font-bold hover:bg-opacity-95">Save Session</button>
+            </form>
+          )}
+
+          <div className="h-64 sm:h-72 w-full" role="img" aria-label={`Bar chart showing ${totalHours.toFixed(1)} total study hours this week`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 22, right: 8, left: 0, bottom: 18 }}>
+                <XAxis dataKey="key" stroke={isDarkMode ? '#CBD5E1' : '#475569'} fontSize={12} tickLine={false} axisLine={false} label={{ value: 'Day', position: 'insideBottom', offset: -8, fill: isDarkMode ? '#CBD5E1' : '#475569', fontSize: 12 }} />
+                <YAxis domain={[0, yAxisMax]} ticks={yAxisTicks} stroke={isDarkMode ? '#CBD5E1' : '#475569'} fontSize={11} tickLine={false} axisLine={false} label={{ value: 'Hours', angle: -90, position: 'insideLeft', fill: isDarkMode ? '#CBD5E1' : '#475569', fontSize: 12 }} />
+                <Tooltip content={renderTooltip} cursor={{ fill: isDarkMode ? '#334155' : '#F1F5F9' }} />
+                <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                  <LabelList dataKey="hours" position="top" formatter={(value) => `${value}h`} fill={isDarkMode ? '#F8FAFC' : '#1E293B'} fontSize={11} fontWeight={700} />
+                  {chartData.map((entry) => <Cell key={entry.key} fill={entry.hours > 0 ? (isDarkMode ? '#F59E0B' : '#D97706') : (isDarkMode ? '#475569' : '#CBD5E1')} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap gap-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400" aria-label="Chart legend">
+            <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-amber-600"></span>Studied</span>
+            <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-slate-300 dark:bg-slate-600"></span>No study logged</span>
+          </div>
+        </section>
+      );
+    }
+
+    function DashboardScreen({ navigate, startQuiz, user, isDarkMode }) {
       return (
         <div className="relative pb-8 space-y-10">
           <div className="text-center max-w-3xl mx-auto space-y-3 pt-4">
@@ -1438,6 +1544,8 @@
               Start Chemistry Quiz Now →
             </button>
           </div>
+
+          <div className="max-w-5xl mx-auto"><StudyHoursChart isDarkMode={isDarkMode} /></div>
         </div>
       );
     }
@@ -2474,16 +2582,6 @@
 
       const activeDecksCount = flashcardDecks.length;
 
-      const activityData = [
-        { day: 'Mon', hours: 2.1, active: false },
-        { day: 'Tue', hours: 3.5, active: true },
-        { day: 'Wed', hours: 1.2, active: false },
-        { day: 'Thu', hours: 2.3, active: false },
-        { day: 'Fri', hours: 4.2, active: true },
-        { day: 'Sat', hours: 1.0, active: false },
-        { day: 'Sun', hours: 1.2 + (quizHistory.length - 2) * 0.3, active: true },
-      ];
-
       const handleSaveProfile = () => {
         setUser(prev => ({
           ...prev,
@@ -2581,25 +2679,7 @@
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-extrabold text-sm text-primary dark:text-white">Learning Activity (Study Hours per Day)</h3>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">This week: {(14.5 + (quizHistory.length - 2) * 0.3).toFixed(1)} hrs total</span>
-            </div>
-
-            <div className="h-44 w-full pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activityData}>
-                  <XAxis dataKey="day" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                  <Bar dataKey="hours" radius={[4, 4, 0, 0]}>
-                    {activityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.active ? (isDarkMode ? '#818CF8' : '#6366F1') : (isDarkMode ? '#334155' : '#475569')} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          <StudyHoursChart isDarkMode={isDarkMode} />
 
           <div className="grid grid-cols-3 gap-6">
             <div className="col-span-2 bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
