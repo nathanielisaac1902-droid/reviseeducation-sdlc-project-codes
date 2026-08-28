@@ -48,6 +48,24 @@
   <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
   <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script>
+    window.ReviseFirebase = { configured: false };
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    if (window.firebase && firebaseConfig.apiKey !== 'YOUR_API_KEY') {
+      firebase.initializeApp(firebaseConfig);
+      window.ReviseFirebase.configured = true;
+    }
+  </script>
   <script src="auth.js"></script>
 
   <style>
@@ -72,7 +90,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+    const { useState, useEffect, useRef, useMemo, useCallback } = React;
     const {
       ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, LabelList
     } = Recharts;
@@ -656,6 +674,7 @@
         { sender: 'ai', text: 'Hello! I am your ReviseSphere AI Study Assistant. How can I help you master your subjects today?' }
       ]);
       const [chatInput, setChatInput] = useState('');
+      const [isAiTyping, setIsAiTyping] = useState(false);
 
       useEffect(() => {
         if (isDarkMode) {
@@ -664,6 +683,12 @@
           document.documentElement.classList.remove('dark');
         }
       }, [isDarkMode]);
+
+      useEffect(() => {
+        if (isAuthenticatedState && 'Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().catch(() => {});
+        }
+      }, [isAuthenticatedState]);
 
       // Auth Guard Effect
       useEffect(() => {
@@ -750,6 +775,7 @@
         const newMessages = [...aiMessages, { sender: 'user', text: msg }];
         setAiMessages(newMessages);
         setChatInput('');
+        setIsAiTyping(true);
 
         setTimeout(() => {
           let aiReply = "That's a great question! Based on your revision notes, focusing on core formulas and active recall using flashcards will boost your memory retention by over 40%.";
@@ -759,9 +785,12 @@
             aiReply = "For stoichiometry, always balance your chemical equation first! Then convert given masses to moles using molar mass before applying the stoichiometric mole ratio.";
           } else if (msg.toLowerCase().includes('quiz') || msg.toLowerCase().includes('test')) {
             aiReply = "You can take timed practice quizzes in the Quiz Engine! Flag any tough questions to review before submitting.";
+          } else if (msg.toLowerCase().includes('help')) {
+            aiReply = { '/quiz/7': 'You are taking a quiz. Would you like a hint or explanation?', '/flashcard-study': 'You are studying flashcards. Need help memorizing a concept?', '/dashboard': 'Let me help plan your study session. What subjects are you focusing on?', '/profile': 'You can track your progress here. Want to see your improvement areas?' }[currentRoute] || 'How can I assist you with your studies today?';
           }
 
           setAiMessages(prev => [...prev, { sender: 'ai', text: aiReply }]);
+          setIsAiTyping(false);
         }, 600);
       };
 
@@ -871,6 +900,7 @@
                     </div>
                   </div>
                 ))}
+                {isAiTyping && <div className="flex justify-start"><div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs flex items-center gap-1"><span className="animate-bounce">●</span><span className="animate-bounce delay-100">●</span><span className="animate-bounce delay-200">●</span></div></div>}
               </div>
 
               <div className="p-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-2">
@@ -900,7 +930,15 @@
 
     function Navbar({ currentRoute, navigate, user, isDarkMode, setIsDarkMode, handleLogout }) {
       const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+      const [isOnline, setIsOnline] = useState(navigator.onLine);
       const menuRef = useRef(null);
+
+      useEffect(() => {
+        const updateOnlineState = () => setIsOnline(navigator.onLine);
+        window.addEventListener('online', updateOnlineState);
+        window.addEventListener('offline', updateOnlineState);
+        return () => { window.removeEventListener('online', updateOnlineState); window.removeEventListener('offline', updateOnlineState); };
+      }, []);
 
       useEffect(() => {
         const handleClickOutside = (event) => {
@@ -945,6 +983,7 @@
                 Profile
               </button>
             </nav>
+            {!isOnline && <span className="text-[10px] text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-700">📶 Offline Mode</span>}
 
             <div className="flex items-center gap-4 relative" ref={menuRef}>
               <button
@@ -1025,10 +1064,7 @@
         const loggedInUser = window.ReviseAuth
           ? window.ReviseAuth.loginUser(emailInput, passInput)
           : { name: emailInput ? emailInput.split('@')[0] : 'User', email: emailInput };
-
-        setUser(loggedInUser);
-        if (setIsAuthenticatedState) setIsAuthenticatedState(true);
-        navigate('/dashboard');
+        Promise.resolve(loggedInUser).then((resolvedUser) => { setUser(resolvedUser); if (setIsAuthenticatedState) setIsAuthenticatedState(true); navigate('/dashboard'); }).catch(() => {});
       };
 
       const handleGuestLogin = () => {
@@ -1233,12 +1269,9 @@
           return;
         }
         const newUser = window.ReviseAuth
-          ? window.ReviseAuth.loginUser(emailInput, passInput, nameInput)
+          ? (window.ReviseAuth.registerUser ? window.ReviseAuth.registerUser(nameInput, emailInput, passInput) : window.ReviseAuth.loginUser(emailInput, passInput, nameInput))
           : { name: nameInput, email: emailInput, isPro: true };
-
-        setUser(newUser);
-        if (setIsAuthenticatedState) setIsAuthenticatedState(true);
-        navigate('/dashboard');
+        Promise.resolve(newUser).then((resolvedUser) => { setUser(resolvedUser); if (setIsAuthenticatedState) setIsAuthenticatedState(true); navigate('/dashboard'); }).catch(() => setErrorMsg('Unable to create account. Check your details and try again.'));
       };
 
       return (
@@ -1405,16 +1438,21 @@
       const yAxisMax = Math.max(5, Math.ceil(maxHours));
       const yAxisTicks = Array.from({ length: yAxisMax + 1 }, (_, index) => index);
 
-      const handleLogSession = (event) => {
+      const handleLogSession = async (event) => {
         event.preventDefault();
         const hours = Number(sessionHours);
         if (!sessionDate || !Number.isFinite(hours) || hours <= 0) return;
         const date = new Date(`${sessionDate}T12:00:00`);
         const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
         const loggedDay = days[dayIndex];
-        setStudyHours((currentHours) => currentHours.map((entry) => (
+        const updatedHours = studyHours.map((entry) => (
           entry.day === loggedDay.key ? { ...entry, hours: Number((entry.hours + hours).toFixed(2)) } : entry
-        )));
+        ));
+        setStudyHours(updatedHours);
+        const authUser = window.ReviseAuth ? window.ReviseAuth.getAuthUser() : null;
+        if (authUser && authUser.uid && window.firebase && typeof firebase.firestore === 'function') {
+          try { await firebase.firestore().collection('studyHours').doc(authUser.uid).set({ hours: updatedHours, lastUpdated: new Date().toISOString() }); } catch (error) { console.error('Failed to sync to cloud:', error); }
+        }
         setIsFormOpen(false);
         setSessionHours('1');
       };
@@ -1467,7 +1505,68 @@
       );
     }
 
+    function RevisionScheduler() {
+      const [examSubjects, setExamSubjects] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('rs-exam-subjects')) || [
+          { id: '1', name: 'Biology', examDate: '2026-09-15', difficulty: 5, priority: 'high' },
+          { id: '2', name: 'Chemistry', examDate: '2026-09-20', difficulty: 4, priority: 'medium' },
+          { id: '3', name: 'Physics', examDate: '2026-10-01', difficulty: 3, priority: 'low' }
+        ]; } catch (error) { return []; }
+      });
+      const [showAddSubject, setShowAddSubject] = useState(false);
+      const [newSubjectName, setNewSubjectName] = useState('');
+      const [newExamDate, setNewExamDate] = useState('');
+      const [newDifficulty, setNewDifficulty] = useState(3);
+
+      useEffect(() => { localStorage.setItem('rs-exam-subjects', JSON.stringify(examSubjects)); }, [examSubjects]);
+      const calculateDailyHours = (examDate, difficulty) => {
+        const daysLeft = Math.max(1, Math.ceil((new Date(examDate) - new Date()) / 86400000));
+        return Math.max(0.5, Math.round((difficulty * 2) / daysLeft * 10) / 10);
+      };
+      const sortedSubjects = [...examSubjects].sort((a, b) => new Date(a.examDate) - new Date(b.examDate));
+      const addSubject = () => {
+        if (!newSubjectName || !newExamDate) return;
+        setExamSubjects([...examSubjects, { id: Date.now().toString(), name: newSubjectName, examDate: newExamDate, difficulty: newDifficulty, priority: newDifficulty >= 4 ? 'high' : newDifficulty >= 3 ? 'medium' : 'low' }]);
+        setNewSubjectName(''); setNewExamDate(''); setNewDifficulty(3); setShowAddSubject(false);
+      };
+      const priorityClasses = { high: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300', medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300', low: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300' };
+      return <section className="bg-white dark:bg-slate-800 rounded-card p-4 sm:p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4">
+        <div className="flex justify-between items-center"><h3 className="font-extrabold text-sm text-primary dark:text-white">📅 Revision Schedule</h3><button onClick={() => setShowAddSubject(true)} className="bg-accentBtn text-primary px-3 py-2 rounded-btn text-xs font-bold hover:bg-opacity-90 transition-all">➕ Add Subject</button></div>
+        <div className="space-y-2">{sortedSubjects.map(subject => <div key={subject.id} className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-700"><div><div className="text-xs font-bold text-primary dark:text-white">{subject.name}</div><div className="text-[11px] text-slate-500 dark:text-slate-400">Exam: {subject.examDate} · {calculateDailyHours(subject.examDate, subject.difficulty)}h/day</div></div><span className={`text-[10px] font-extrabold uppercase px-2 py-1 rounded ${priorityClasses[subject.priority]}`}>{subject.priority}</span></div>)}</div>
+        {showAddSubject && <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3"><div className="grid sm:grid-cols-2 gap-3"><input value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} placeholder="Subject Name" className="p-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs" /><input type="date" value={newExamDate} onChange={e => setNewExamDate(e.target.value)} className="p-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs" /></div><label className="block text-xs font-semibold text-slate-600 dark:text-slate-400">Difficulty: {newDifficulty}<input type="range" min="1" max="5" value={newDifficulty} onChange={e => setNewDifficulty(Number(e.target.value))} className="w-full" /></label><div className="flex gap-2"><button onClick={addSubject} className="bg-primary text-white px-4 py-2 rounded-btn text-xs font-bold">Save Subject</button><button onClick={() => setShowAddSubject(false)} className="text-slate-500 px-4 py-2 text-xs font-semibold">Cancel</button></div></div>}
+      </section>;
+    }
+
+    const PomodoroTimer = React.memo(function PomodoroTimer() {
+      const [mode, setMode] = useState('focus');
+      const [timeLeft, setTimeLeft] = useState(25 * 60);
+      const [isRunning, setIsRunning] = useState(false);
+      const [sessionsCompleted, setSessionsCompleted] = useState(0);
+      const duration = mode === 'focus' ? 25 : mode === 'break' ? 5 : 15;
+      useEffect(() => {
+        if (!isRunning) return undefined;
+        if (timeLeft <= 0) {
+          const nextCount = mode === 'focus' ? sessionsCompleted + 1 : sessionsCompleted;
+          const nextMode = mode === 'focus' ? (nextCount % 4 === 0 ? 'longBreak' : 'break') : 'focus';
+          if (mode === 'focus') setSessionsCompleted(nextCount);
+          setMode(nextMode); setTimeLeft(nextMode === 'focus' ? 25 * 60 : nextMode === 'break' ? 5 * 60 : 15 * 60); setIsRunning(false);
+          if (mode === 'focus' && window.ReviseFX) window.ReviseFX.triggerConfetti();
+          return undefined;
+        }
+        const timer = setInterval(() => setTimeLeft(value => value - 1), 1000);
+        return () => clearInterval(timer);
+      }, [isRunning, timeLeft, mode, sessionsCompleted]);
+      const reset = () => { setTimeLeft(duration * 60); setIsRunning(false); };
+      return <section className="bg-white dark:bg-slate-800 rounded-card p-4 sm:p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-4 text-center"><h3 className="font-extrabold text-sm text-primary dark:text-white">⏱️ Pomodoro Focus Timer</h3><div className="relative mx-auto w-36 h-36 flex items-center justify-center"><svg className="absolute w-full h-full -rotate-90" viewBox="0 0 36 36"><path className="text-slate-100 dark:text-slate-700" stroke="currentColor" strokeWidth="3" fill="none" d="M18 2.5a15.5 15.5 0 1 1 0 31a15.5 15.5 0 1 1 0-31" /><path className="text-emerald-500" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray={`${(timeLeft / (duration * 60)) * 100}, 100`} d="M18 2.5a15.5 15.5 0 1 1 0 31a15.5 15.5 0 1 1 0-31" /></svg><span className="text-3xl font-black text-primary dark:text-white">{String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}</span></div><div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{mode === 'longBreak' ? 'Long Break' : mode}</div><div className="flex justify-center gap-2"><button onClick={() => setIsRunning(!isRunning)} className="bg-primary text-white px-4 py-2 rounded-btn text-xs font-bold">{isRunning ? 'Pause' : 'Start'}</button><button onClick={reset} className="border border-borderClr dark:border-slate-700 px-4 py-2 rounded-btn text-xs font-semibold text-slate-700 dark:text-slate-200">Reset</button></div><div className="text-xs text-slate-500 dark:text-slate-400">🍅 x{sessionsCompleted}</div></section>;
+    });
+
     function DashboardScreen({ navigate, startQuiz, user, isDarkMode }) {
+      const upcomingExam = { name: 'Biology', daysLeft: Math.ceil((new Date('2026-09-15') - new Date()) / 86400000) };
+      useEffect(() => {
+        if (upcomingExam.daysLeft >= 0 && upcomingExam.daysLeft <= 3 && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification(`${upcomingExam.name} Exam Approaching!`, { body: `Only ${upcomingExam.daysLeft} days left! Start your revision now.`, icon: 'logo_icon.png' });
+        }
+      }, [upcomingExam.daysLeft]);
       return (
         <div className="relative pb-8 space-y-10">
           <div className="text-center max-w-3xl mx-auto space-y-3 pt-4">
@@ -1476,6 +1575,8 @@
               Welcome back, Amara Okeke! Everything you need to master your courses and ace your upcoming exams with AI tools.
             </p>
           </div>
+
+          {upcomingExam.daysLeft >= 0 && upcomingExam.daysLeft <= 7 && <div className="max-w-5xl mx-auto bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 px-4 py-2.5 rounded-xl text-xs font-semibold">⚠️ {upcomingExam.name} exam is in {upcomingExam.daysLeft} days. Start your revision plan now.</div>}
 
           <div className="grid grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-primary dark:bg-slate-800 text-white rounded-card p-8 flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all border border-slate-800 dark:border-slate-700">
@@ -1532,6 +1633,7 @@
           </div>
 
           <div className="max-w-5xl mx-auto"><StudyHoursChart isDarkMode={isDarkMode} /></div>
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-6"><RevisionScheduler /><PomodoroTimer /></div>
         </div>
       );
     }
@@ -1540,11 +1642,11 @@
       const [subjectFilter, setSubjectFilter] = useState('ALL');
       const [diffFilter, setDiffFilter] = useState('ALL');
 
-      const filteredQuizzes = QUIZ_DATABASE.filter(q => {
+      const filteredQuizzes = useMemo(() => QUIZ_DATABASE.filter(q => {
         if (subjectFilter !== 'ALL' && q.subject !== subjectFilter) return false;
         if (diffFilter !== 'ALL' && q.difficulty !== diffFilter) return false;
         return true;
-      });
+      }), [subjectFilter, diffFilter]);
 
       return (
         <div className="space-y-6 pb-12">
@@ -1673,6 +1775,22 @@
       );
     }
 
+    const saveQuizProgress = (quizId, answers, flagged, activeIdx) => {
+      try { localStorage.setItem(`quiz_progress_${quizId}`, JSON.stringify({ answers, flagged, activeIdx, timestamp: Date.now() })); } catch (error) { /* Storage may be unavailable in private browsing. */ }
+    };
+    const loadQuizProgress = (quizId) => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(`quiz_progress_${quizId}`));
+        return saved && Date.now() - saved.timestamp < 24 * 60 * 60 * 1000 ? saved : null;
+      } catch (error) { return null; }
+    };
+    const cacheDeck = (deck) => {
+      try { localStorage.setItem(`cached_deck_${deck.id}`, JSON.stringify(deck)); } catch (error) { /* Offline cache is best effort. */ }
+    };
+    const loadCachedDeck = (deckId) => {
+      try { return JSON.parse(localStorage.getItem(`cached_deck_${deckId}`)); } catch (error) { return null; }
+    };
+
     function QuizInProgressScreen({
       navigate,
       quiz,
@@ -1703,6 +1821,20 @@
         setIsTimerPaused(false);
         setShowTimeWarning(false);
       }, [quiz]);
+
+      useEffect(() => {
+        if (!quiz) return;
+        const saved = loadQuizProgress(quiz.id);
+        if (saved) {
+          setUserAnswers(saved.answers || {});
+          setFlaggedQuestions(saved.flagged || {});
+          setActiveIdx(saved.activeIdx || 0);
+        }
+      }, [quiz]);
+
+      useEffect(() => {
+        if (quiz) saveQuizProgress(quiz.id, userAnswers, flaggedQuestions, activeIdx);
+      }, [userAnswers, flaggedQuestions, activeIdx, quiz]);
 
       useEffect(() => {
         // Only depend on isTimerPaused — NOT timeLeft — to avoid creating a new
@@ -2070,6 +2202,19 @@
       const [deckTitle, setDeckTitle] = useState("Biology: Cell Organelles");
       const [isGenerating, setIsGenerating] = useState(false);
 
+      useEffect(() => {
+        const sharedData = new URLSearchParams(window.location.search).get('sharedDeck');
+        if (!sharedData) return;
+        try {
+          const decoded = JSON.parse(atob(sharedData));
+          setDeckTitle(`${decoded.title} (Shared)`);
+          setDeckSubject(decoded.subject);
+          setEditableCards((decoded.cards || []).map((card, index) => ({ id: `shared-${index}`, front: card.front, back: card.back })));
+        } catch (error) {
+          console.error('Invalid shared deck');
+        }
+      }, []);
+
       const [editableCards, setEditableCards] = useState([
         { id: 'c1', front: "Mitochondria", back: "Powerhouse of the cell; produces ATP via cellular respiration." },
         { id: 'c2', front: "Ribosomes", back: "Protein synthesis machinery of the cell." },
@@ -2283,6 +2428,19 @@
       const safeIndex = Math.min(deckCardIndex, cards.length - 1);
       const currentCard = cards[safeIndex] || cards[0];
 
+      useEffect(() => { if (currentDeck) cacheDeck(currentDeck); }, [currentDeck]);
+
+      const handleShareDeck = () => {
+        if (!currentDeck) return;
+        const encodedData = btoa(JSON.stringify({ title: currentDeck.title, subject: currentDeck.subject, cards: currentDeck.cards.map(card => ({ front: card.front, back: card.back })) }));
+        const shareLink = `${window.location.origin}${window.location.pathname}?sharedDeck=${encodedData}`;
+        if (navigator.share) {
+          navigator.share({ title: `📚 ${currentDeck.title} - ReviseSphere`, text: `Check out my ${currentDeck.subject} flashcards on ReviseSphere!`, url: shareLink }).catch(() => {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareLink).then(() => window.alert('Deck link copied to clipboard.')).catch(() => {});
+        }
+      };
+
       // Reset card index whenever the active deck changes
       useEffect(() => {
         setDeckCardIndex(0);
@@ -2345,18 +2503,18 @@
         }, 300); // 300ms delay for visual feedback
       };
 
-      const handleNextCard = () => {
+      const handleNextCard = useCallback(() => {
         setIsFlipped(false);
         setDeckCardIndex((safeIndex + 1) % cards.length);
-      };
+      }, [safeIndex, cards.length]);
 
       // Keep ref up-to-date so the stale keyboard closure always calls the latest version
       handleNextCardRef.current = handleNextCard;
 
-      const handlePrevCard = () => {
+      const handlePrevCard = useCallback(() => {
         setIsFlipped(false);
         setDeckCardIndex((safeIndex - 1 + cards.length) % cards.length);
-      };
+      }, [safeIndex, cards.length]);
 
       const handleOpenCardRename = () => {
         setRenamedFront(currentCard.front);
@@ -2461,7 +2619,7 @@
                   <button onClick={() => { setDeckTitleInput(currentDeck.title); setIsRenamingDeck(true); }} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold">✏️ Rename Deck</button>
                 </div>
               )}
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Card {deckCardIndex + 1} of {cards.length}</span>
+              <div className="flex items-center gap-3"><button onClick={handleShareDeck} className="border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-btn text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm">🔗 Share Deck</button><span className="text-xs font-bold text-slate-500 dark:text-slate-400">Card {deckCardIndex + 1} of {cards.length}</span></div>
             </div>
 
             <div

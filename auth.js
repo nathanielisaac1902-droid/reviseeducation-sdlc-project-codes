@@ -10,11 +10,24 @@ const DEFAULT_USER = {
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
 };
 
-export function isAuthenticated() {
-  return localStorage.getItem(AUTH_KEY) === 'true';
+function getFirebaseAuth() {
+  return isFirebaseConfigured() && window.firebase && typeof window.firebase.auth === 'function' ? window.firebase.auth() : null;
 }
 
-export function getAuthUser() {
+function getFirebaseDb() {
+  return isFirebaseConfigured() && window.firebase && typeof window.firebase.firestore === 'function' ? window.firebase.firestore() : null;
+}
+
+function isFirebaseConfigured() {
+  return Boolean(window.ReviseFirebase && window.ReviseFirebase.configured);
+}
+
+function isAuthenticated() {
+  const auth = getFirebaseAuth();
+  return Boolean((isFirebaseConfigured() && auth && auth.currentUser) || localStorage.getItem(AUTH_KEY) === 'true');
+}
+
+function getAuthUser() {
   const stored = localStorage.getItem(USER_KEY);
   if (stored) {
     try {
@@ -26,12 +39,21 @@ export function getAuthUser() {
   return DEFAULT_USER;
 }
 
-export function setAuthUser(user) {
+function setAuthUser(user) {
   localStorage.setItem(AUTH_KEY, 'true');
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-export function loginUser(emailOrUsername, password, customName) {
+function loginUser(emailOrUsername, password, customName) {
+  const auth = getFirebaseAuth();
+  if (isFirebaseConfigured() && auth && emailOrUsername && emailOrUsername.includes('@')) {
+    return auth.signInWithEmailAndPassword(emailOrUsername, password).then(async (credential) => {
+      const userDoc = await getFirebaseDb().collection('users').doc(credential.user.uid).get();
+      const user = userDoc.exists ? userDoc.data() : { ...DEFAULT_USER, email: credential.user.email, uid: credential.user.uid };
+      setAuthUser(user);
+      return user;
+    });
+  }
   let name = customName;
   if (!name) {
     if (emailOrUsername && emailOrUsername.includes('@')) {
@@ -60,13 +82,29 @@ export function loginUser(emailOrUsername, password, customName) {
   return user;
 }
 
-export function logoutUser() {
+async function logoutUser() {
+  const auth = getFirebaseAuth();
+  if (isFirebaseConfigured() && auth) {
+    await auth.signOut();
+  }
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(USER_KEY);
 }
 
+async function registerUser(name, email, password) {
+  const auth = getFirebaseAuth();
+  if (isFirebaseConfigured() && auth) {
+    const credential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = { uid: credential.user.uid, name, email, isPro: false, avatar: DEFAULT_USER.avatar, createdAt: new Date().toISOString() };
+    await getFirebaseDb().collection('users').doc(credential.user.uid).set(user);
+    setAuthUser(user);
+    return user;
+  }
+  return loginUser(email, password, name);
+}
+
 // Interactive Web Audio Synthesizer (Zero network dependencies)
-export function playSound(type) {
+function playSound(type) {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
@@ -117,7 +155,7 @@ export function playSound(type) {
 }
 
 // Particle & Confetti Explosion Trigger
-export function triggerConfetti() {
+function triggerConfetti() {
   if (typeof window.confetti === 'function') {
     window.confetti({
       particleCount: 70,
@@ -134,6 +172,7 @@ if (typeof window !== 'undefined') {
     getAuthUser,
     setAuthUser,
     loginUser,
+    registerUser,
     logoutUser
   };
   window.ReviseFX = {
