@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReviseSphere | Sign Up</title>
+  <link rel="icon" type="image/png" href="logo_icon.png" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1E2A4A',
+            primaryDark: '#0F172A',
+            bgMain: '#F5F7FB',
+            accentBtn: '#DCEFD3',
+            accent: '#C7E4C7',
+            success: '#16A34A',
+            error: '#DC2626',
+            borderClr: '#E5E7EB',
+            textMain: '#111827',
+            textGray: '#6B7280'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          borderRadius: {
+            'card': '16px',
+            'btn': '8px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="auth.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+  </style>
+</head>
+
+<body class="bg-bgMain text-textMain dark:bg-slate-900 dark:text-slate-100 antialiased min-h-screen flex items-center justify-center py-12">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Check if already authenticated
+    if (window.ReviseAuth && window.ReviseAuth.isAuthenticated()) {
+      window.location.href = 'index.html';
+    }
+
+    const LogoIcon = () => (
+      <div className="flex flex-col items-center justify-center">
+        <img
+          src="logo.png"
+          alt="ReviseSphere Official Logo"
+          className="w-56 h-auto object-contain mx-auto filter drop-shadow-md hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.style.display = 'none';
+          }}
+        />
+      </div>
+    );
+
+    function SignUpPage() {
+      const [nameInput, setNameInput] = useState('Amara Okeke');
+      const [emailInput, setEmailInput] = useState('amara.okeke@stanford.edu');
+      const [passInput, setPassInput] = useState('••••••••••••');
+      const [confirmPassInput, setConfirmPassInput] = useState('••••••••••••');
+      const [errorMsg, setErrorMsg] = useState('');
+
+      const handleSignUp = (e) => {
+        if (e) e.preventDefault();
+        if (passInput !== confirmPassInput) {
+          setErrorMsg('Passwords do not match');
+          return;
+        }
+        if (window.ReviseAuth) {
+          window.ReviseAuth.loginUser(emailInput, passInput, nameInput);
+        }
+        window.location.href = 'index.html';
+      };
+
+      return (
+        <div className="w-full max-w-4xl mx-auto px-4">
+          <div className="bg-white dark:bg-slate-800 rounded-[24px] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[580px] border border-borderClr dark:border-slate-700 transition-all">
+            {/* Left Banner */}
+            <div className="w-full md:w-5/12 bg-primary dark:bg-slate-950 p-8 md:p-12 text-white flex flex-col justify-center items-center text-center relative border-b md:border-b-0 md:border-r border-slate-800">
+              <div className="mb-6 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800">
+                <LogoIcon />
+              </div>
+              <h1 className="text-3xl font-extrabold mb-3 tracking-tight text-white">Get Started!</h1>
+              <p className="text-slate-300 text-sm leading-relaxed max-w-xs">
+                Create your ReviseSphere study suite account in seconds.
+              </p>
+            </div>
+
+            {/* Right Form Container */}
+            <div className="w-full md:w-7/12 p-8 md:p-12 flex flex-col justify-center bg-white dark:bg-slate-800">
+              <div className="max-w-md mx-auto w-full space-y-5">
+                <div className="bg-slate-100 dark:bg-slate-700/60 p-1 rounded-lg flex mb-4">
+                  <a
+                    href="login.html"
+                    className="flex-1 text-center py-2 text-xs font-semibold rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-colors"
+                  >
+                    Log In
+                  </a>
+                  <button className="flex-1 py-2 text-xs font-bold rounded-md bg-primary dark:bg-indigo-600 text-white shadow">
+                    Sign Up
+                  </button>
+                </div>
+
+                {errorMsg && (
+                  <div className="bg-red-50 text-red-600 p-2.5 rounded-btn text-xs font-semibold border border-red-200">
+                    {errorMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleSignUp} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      placeholder="Amara Okeke"
+                      className="w-full px-3.5 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder="amara.okeke@stanford.edu"
+                      className="w-full px-3.5 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passInput}
+                      onChange={(e) => setPassInput(e.target.value)}
+                      className="w-full px-3.5 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassInput}
+                      onChange={(e) => setConfirmPassInput(e.target.value)}
+                      className="w-full px-3.5 py-2 border border-borderClr dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-btn text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer">
+                      <input type="checkbox" defaultChecked className="rounded text-primary focus:ring-primary w-4 h-4" />
+                      <span>Agree to Terms &amp; Conditions</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-primary dark:bg-indigo-600 text-white py-3 rounded-btn font-bold text-xs hover:bg-opacity-90 transition-all shadow-md mt-3 cursor-pointer"
+                  >
+                    Create Account
+                  </button>
+                </form>
+
+                <div className="text-center pt-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Already have an account?{' '}
+                    <a
+                      href="login.html"
+                      className="text-primary dark:text-indigo-400 font-bold hover:underline"
+                    >
+                      Log In
+                    </a>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<SignUpPage />);
+  </script>
+</body>
+
+</html>

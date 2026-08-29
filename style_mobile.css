@@ -1,0 +1,623 @@
+/* ReviseSphere Styles */
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #F5F7FB;
+  color: #111827;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Keep the application inside an iPhone 17-sized preview on larger screens. */
+body {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #dbe3ec;
+}
+
+.device-frame {
+  position: relative;
+  width: 393px;
+  height: 852px;
+  min-height: 852px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 8px solid #111827;
+  border-radius: 40px;
+  background: #F5F7FB;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.7);
+  scrollbar-width: thin;
+}
+
+.device-frame > div {
+  min-height: 100%;
+}
+
+.device-frame,
+.device-frame * {
+  box-sizing: border-box;
+}
+
+.device-frame img,
+.device-frame svg {
+  max-width: 100%;
+}
+
+.device-frame .fixed {
+  position: absolute;
+}
+
+.device-frame .fixed.top-0 {
+  top: 0;
+}
+
+.device-frame .fixed.bottom-16 {
+  bottom: 4rem;
+}
+
+.device-frame .fixed.bottom-28 {
+  bottom: 7rem;
+}
+
+.device-frame .fixed.bottom-3 {
+  bottom: 0.75rem;
+}
+
+/* Navbar */
+.navbar {
+  background-color: #1E3A8A;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.navbar-nav {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-nav a {
+  color: #CBD5E1;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
+}
+
+.navbar-nav a:hover,
+.navbar-nav a.active {
+  color: #ffffff;
+}
+
+/* Flashcard Container & Perspective */
+.flashcard-container {
+  max-w: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.perspective {
+  perspective: 1000px;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+  background-color: #F0FDF4;
+  border-color: #BBF7D0;
+}
+
+.card-side {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1E3A8A;
+  line-height: 1.5;
+}
+
+.card.flipped .card-side {
+  transform: rotateY(180deg);
+  color: #166534;
+}
+
+#cardCounter {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #64748B;
+  margin-bottom: 1rem;
+}
+
+/* Difficulty Buttons & Indigo Active Square Highlight */
+.difficulty-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.difficulty-btn {
+  flex: 1;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.difficulty-btn.bg-red-100 {
+  background-color: #FEE2E2;
+  color: #991B1B;
+}
+
+.difficulty-btn.bg-yellow-100 {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.difficulty-btn.bg-green-100 {
+  background-color: #DCFCE7;
+  color: #166534;
+}
+
+/* TASK 3: Indigo Highlight Square Border & Shadow */
+.difficulty-btn.active {
+  border: 3px solid #1E3A8A;
+  box-shadow: 0 0 0 4px rgba(30,58,138,0.3);
+}
+
+/* Mobile layout for the React study suite. */
+@media all {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button,
+  a {
+    min-height: 44px;
+  }
+
+  header.fixed > div {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .device-frame header.fixed {
+    height: 4rem !important;
+  }
+
+  .device-frame header.fixed > div {
+    width: 100%;
+    gap: 0.5rem;
+    padding: 0 1rem !important;
+  }
+
+  .device-frame header .group {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .device-frame header .group span {
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .mobile-actions {
+    gap: 0.25rem !important;
+    flex-shrink: 0;
+  }
+
+  .mobile-actions > button:last-of-type {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  main.pt-20 {
+    padding: 5.25rem 1rem 7rem !important;
+  }
+
+  main:not(.pt-20) {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .device-frame .md\:flex-row {
+    flex-direction: column !important;
+  }
+
+  .device-frame .md\:w-5\/12,
+  .device-frame .md\:w-7\/12 {
+    width: 100% !important;
+  }
+
+  .device-frame .md\:border-b-0 {
+    border-bottom-width: 1px !important;
+  }
+
+  .device-frame .md\:border-r {
+    border-right-width: 0 !important;
+  }
+
+  main.pt-20 > div {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .mobile-nav-panel {
+    position: absolute;
+    top: 4rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 0.75rem;
+    background: #1e2a4a;
+    box-shadow: 0 18px 35px rgba(15, 23, 42, 0.35);
+  }
+
+  .mobile-nav-panel.hidden {
+    display: none !important;
+  }
+
+  .mobile-nav-panel:not(.hidden) {
+    display: flex !important;
+  }
+
+  .mobile-nav-panel button {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-radius: 0.5rem;
+  }
+
+  .mobile-actions button,
+  .mobile-actions a {
+    min-height: 44px;
+  }
+
+  .mobile-action-label {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex !important;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .grid.grid-cols-2,
+  .grid.grid-cols-3,
+  .grid.grid-cols-4 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .flex.gap-8.items-start,
+  .flex.gap-8.items-center {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .w-60,
+  .w-\[420px\] {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .flex-1 {
+    min-width: 0 !important;
+    width: auto;
+  }
+
+  .device-frame .flex > *,
+  .device-frame .grid > * {
+    min-width: 0;
+  }
+
+  .device-frame button,
+  .device-frame a {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .device-frame h1,
+  .device-frame h2,
+  .device-frame h3,
+  .device-frame h4,
+  .device-frame p,
+  .device-frame span {
+    overflow-wrap: anywhere;
+  }
+
+  .max-w-5xl,
+  .max-w-4xl {
+    max-width: none !important;
+  }
+
+  .p-8 {
+    padding: 1.25rem !important;
+  }
+
+  .px-8 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .text-4xl {
+    font-size: 1.75rem !important;
+    line-height: 2.1rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.35rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .flex.justify-between.items-center {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .flex.justify-between.items-center > * {
+    min-width: 0;
+  }
+
+  .h-64.sm\:h-72 {
+    height: 16rem !important;
+  }
+
+  .device-frame .recharts-responsive-container,
+  .device-frame .recharts-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .device-frame .recharts-surface {
+    overflow: visible;
+  }
+
+  .device-frame .recharts-cartesian-axis-tick text,
+  .device-frame .recharts-label {
+    font-size: 10px !important;
+  }
+
+  .fixed.bottom-16.right-8 {
+    right: 1rem !important;
+    bottom: 5.5rem !important;
+  }
+
+  .fixed.bottom-28.right-8 {
+    right: 0.75rem !important;
+    bottom: 5.5rem !important;
+    width: calc(100% - 1.5rem) !important;
+    max-width: 24rem;
+  }
+
+  .fixed.bottom-3.left-1\/2 {
+    position: relative !important;
+    left: 0.5rem !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: calc(100% - 1rem);
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 1rem auto;
+    overflow-x: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .min-h-\[340px\] {
+    min-height: 18rem !important;
+  }
+
+  .quiz-content-column {
+    width: 100% !important;
+  }
+
+  .quiz-stats-panel {
+    width: 100%;
+    padding: 1rem !important;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .quiz-stats-panel > div:not(.h-10) {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .quiz-stats-panel > div:not(.h-10) > div:last-child {
+    min-width: 0;
+  }
+
+  .quiz-stats-panel > .h-10.w-\[1px\] {
+    width: 100%;
+    height: 1px;
+    min-height: 1px;
+  }
+
+  .quiz-topics-layout {
+    width: 100%;
+    gap: 1rem !important;
+  }
+
+  .quiz-filters-panel {
+    width: 100% !important;
+    padding: 1rem !important;
+  }
+
+  .quiz-filters-panel > .space-y-3,
+  .quiz-filters-panel > .pt-2 {
+    display: block;
+  }
+
+  .quiz-filters-panel .space-y-2 {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .quiz-filters-panel .space-y-2 label {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .quiz-filters-panel .space-y-2 input {
+    flex-shrink: 0;
+  }
+
+  .quiz-topics-layout > .flex-1 {
+    width: 100% !important;
+  }
+
+  .quiz-topics-layout > .flex-1 > .flex.items-center.justify-between {
+    align-items: flex-start;
+  }
+
+  .quiz-content-column > .bg-white:first-child {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem !important;
+  }
+
+  .quiz-progress-info {
+    width: 100%;
+    margin-right: 0 !important;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem !important;
+  }
+
+  .quiz-progress-info > span {
+    min-width: 0;
+  }
+
+  .quiz-timer {
+    align-self: flex-end;
+    width: max-content;
+    max-width: 100%;
+    white-space: nowrap !important;
+  }
+
+  .quiz-question-card {
+    padding: 1.25rem !important;
+  }
+
+  .quiz-question-card > div:first-child {
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .quiz-question-card > div:first-child > span {
+    text-align: right;
+  }
+
+  .quiz-question-card [class*="cursor-pointer"] {
+    min-height: 3.25rem;
+    padding: 0.875rem !important;
+    align-items: flex-start;
+  }
+
+  .px-6.py-2\.5,
+  .px-5.py-2\.5,
+  .px-4.py-2,
+  .px-4.py-2\.5 {
+    min-height: 44px;
+  }
+
+  .flex.justify-between.items-center.pt-2 > .flex {
+    width: 100%;
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .flex.justify-between.items-center.pt-2 > .flex > button,
+  .flex.justify-between.items-center.pt-2 > button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .flex.justify-between.items-center.pt-2 > .flex {
+    gap: 0.5rem;
+  }
+
+  .grid.grid-cols-2.gap-4 {
+    gap: 0.75rem !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .mobile-menu-button {
+    display: none !important;
+  }
+}

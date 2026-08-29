@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReviseSphere | AI Study Deck & Flashcards</title>
+  <link rel="icon" type="image/png" href="logo_icon.png" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1E3A8A',
+            primaryDark: '#0F172A',
+            bgMain: '#F5F7FB',
+            accentBtn: '#DCEFD3',
+            accent: '#C7E4C7',
+            success: '#16A34A',
+            error: '#DC2626',
+            borderClr: '#E5E7EB',
+            textMain: '#111827',
+            textGray: '#6B7280'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          borderRadius: {
+            'card': '16px',
+            'btn': '8px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* 3D Perspective Card Flip Styling */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    .card-inner {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    /* Difficulty Button Animation */
+    .difficulty-btn {
+      transition: all 0.2s ease-in-out;
+    }
+
+    .difficulty-btn:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+
+  <!-- ReviseSphere Auth Helper -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="auth.js"></script>
+</head>
+
+<body
+  class="bg-bgMain text-textMain dark:bg-slate-900 dark:text-slate-100 antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- 1. ReviseSphere Navbar (Dark Blue #1E3A8A) -->
+  <header
+    class="fixed top-0 left-0 right-0 h-16 bg-primary dark:bg-slate-950 text-white z-40 border-b border-slate-800 shadow-md transition-colors">
+    <div class="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-between">
+      <!-- Logo -->
+      <a href="index.html" class="flex items-center gap-3 cursor-pointer group">
+        <img src="logo_icon.png" alt="ReviseSphere Symbol Logo"
+          class="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
+        <span class="text-white font-extrabold text-lg tracking-tight group-hover:text-accent transition-colors">
+          Revise<span class="font-semibold text-slate-200">Sphere</span>
+        </span>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="flex gap-8 items-center font-medium text-sm">
+        <a href="index.html"
+          class="py-5 border-b-2 border-transparent text-slate-300 hover:text-white transition-colors">Home</a>
+        <a href="index.html"
+          class="py-5 border-b-2 border-transparent text-slate-300 hover:text-white transition-colors">Quizzes</a>
+        <a href="flashcards.html"
+          class="py-5 border-b-2 border-accent text-white font-semibold transition-colors">Flashcards</a>
+        <a href="index.html"
+          class="py-5 border-b-2 border-transparent text-slate-300 hover:text-white transition-colors">Profile</a>
+      </nav>
+
+      <!-- Right Actions: Theme Toggle & Avatar -->
+      <div class="flex items-center gap-4 relative">
+        <button id="themeToggleBtn" onclick="document.documentElement.classList.toggle('dark')"
+          class="p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 transition-all text-xs"
+          title="Toggle Light/Dark Theme">
+          🌙 Dark
+        </button>
+
+        <a href="index.html"
+          class="bg-accentBtn text-primary font-semibold text-xs px-4 py-2 rounded-btn hover:bg-opacity-90 transition-all flex items-center gap-1.5 shadow-sm">
+          <span class="text-base font-bold">+</span> New Deck
+        </a>
+
+        <!-- Dynamic User Avatar (Initials "AO") -->
+        <a href="index.html"
+          class="w-8 h-8 rounded-full bg-orange-500 border border-slate-600 text-white font-bold flex items-center justify-center text-xs uppercase tracking-wider shadow-inner select-none hover:ring-2 ring-accent transition-all"
+          title="Amara Okeke">
+          AO
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Main Workspace Layout -->
+  <main class="flex-1 pt-20 pb-16 max-w-[1440px] mx-auto px-8 w-full">
+
+    <!-- Active Study View Container -->
+    <div id="studyContainer" class="flex gap-8 items-start">
+
+      <!-- Left Panel: Study Progress & Session Stats -->
+      <aside
+        class="w-72 bg-white dark:bg-slate-800 rounded-card p-6 border border-borderClr dark:border-slate-700 shadow-sm space-y-6">
+        <div>
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">STUDY
+            SESSION</span>
+          <h2 class="text-base font-extrabold text-primary dark:text-white">Cellular Biology &amp; Organic Chem</h2>
+        </div>
+
+        <!-- Dynamic Progress Bar -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs font-bold">
+            <span class="text-slate-500 dark:text-slate-400">Progress</span>
+            <span id="cardCounterText" class="text-primary dark:text-blue-400">Card 1 of 8</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+            <div id="progressBarFill" class="bg-primary dark:bg-blue-500 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Real-time Stats Grid -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+            <div class="text-[10px] font-bold text-slate-400">TOTAL CARDS</div>
+            <div id="statTotal" class="text-xl font-black text-primary dark:text-white mt-0.5">8</div>
+          </div>
+          <div
+            class="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
+            <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">MASTERED</div>
+            <div id="statMastered" class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">0</div>
+          </div>
+          <div class="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
+            <div class="text-[10px] font-bold text-blue-600 dark:text-blue-400">LEARNING</div>
+            <div id="statLearning" class="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5">8</div>
+          </div>
+          <div class="bg-red-50 dark:bg-red-950/40 p-3 rounded-xl border border-red-100 dark:border-red-900/50">
+            <div class="text-[10px] font-bold text-red-600 dark:text-red-400">NEED PRACTICE</div>
+            <div id="statNeed" class="text-xl font-black text-red-600 dark:text-red-400 mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- Session Timer -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs">
+          <span class="text-slate-500 font-semibold">Session Time</span>
+          <span id="timerDisplay" class="font-mono font-bold text-primary dark:text-blue-400">00:00</span>
+        </div>
+
+        <!-- Keyboard Shortcuts Legend -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2.5">
+          <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">KEYBOARD SHORTCUTS</div>
+          <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+            <div class="flex justify-between items-center">
+              <span>Flip card</span>
+              <kbd
+                class="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">Space</kbd>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Need Practice</span>
+              <kbd
+                class="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">1</kbd>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Pass</span>
+              <kbd
+                class="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">2</kbd>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>I Know This</span>
+              <kbd
+                class="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300">3</kbd>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Content Area: Flashcard & Difficulty Controls -->
+      <div class="flex-1 space-y-6">
+
+        <!-- Header Controls -->
+        <div class="flex justify-between items-center">
+          <div>
+            <span id="cardBadge"
+              class="text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-2.5 py-1 rounded uppercase tracking-wider">BIOLOGY</span>
+          </div>
+          <button id="flipBtn"
+            class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline bg-blue-50 dark:bg-blue-950/60 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all">
+            🔄 Flip Card
+          </button>
+        </div>
+
+        <!-- Interactive 3D Flashcard Component -->
+        <div id="flashcard" class="perspective-1000 cursor-pointer">
+          <div
+            class="card-inner bg-white dark:bg-slate-800 rounded-card p-10 border border-borderClr dark:border-slate-700 shadow-xl min-h-[340px] flex flex-col justify-between items-center text-center relative select-none hover:border-blue-300 dark:hover:border-slate-600 transition-all">
+
+            <!-- Side Indicator Header -->
+            <div class="w-full flex justify-between items-center">
+              <span id="cardStateIndicator"
+                class="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                FRONT (QUESTION)
+              </span>
+              <span class="text-xs text-slate-400 font-medium">Click card to flip</span>
+            </div>
+
+            <!-- Front Side: Question -->
+            <div id="cardFrontSide" class="my-auto max-w-2xl py-6">
+              <h2 id="cardFrontText" class="text-2xl font-extrabold text-primary dark:text-white leading-relaxed">
+                Loading Flashcard...
+              </h2>
+            </div>
+
+            <!-- Back Side: Answer + "Why it matters" Explanation -->
+            <div id="cardBackSide" class="hidden my-auto max-w-2xl py-4 space-y-4">
+              <h2 id="cardBackText"
+                class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 leading-relaxed">
+                Loading Answer...
+              </h2>
+              <div
+                class="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-100 dark:border-slate-700 text-left space-y-1">
+                <span
+                  class="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">WHY
+                  IT MATTERS</span>
+                <p id="cardExplanation" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  Explanation...
+                </p>
+              </div>
+            </div>
+
+            <!-- Card Bottom Hint -->
+            <div class="w-full pt-4 border-t border-slate-100 dark:border-slate-700/60 flex justify-center">
+              <span class="text-xs text-slate-400 font-medium">Click anywhere on card or press Space to flip</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PART 1 FIX: 3 Difficulty Buttons with Moving Blue Square Indicator -->
+        <div class="text-center space-y-4 pt-2">
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold block">
+            How well did you recall this answer?
+          </span>
+
+          <!-- Difficulty Controls Container -->
+          <div class="flex justify-center gap-4 max-w-lg mx-auto">
+            <!-- 1. Need Practice (Hard) -->
+            <button id="btnNeed"
+              class="difficulty-btn flex-1 border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3.5 px-4 rounded-btn text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm">
+              <span class="text-base">☹️</span> Need Practice
+            </button>
+
+            <!-- 2. Pass (Medium) -->
+            <button id="btnPass"
+              class="difficulty-btn flex-1 border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3.5 px-4 rounded-btn text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm">
+              <span class="text-base">😐</span> Pass
+            </button>
+
+            <!-- 3. I Know This (Easy) -->
+            <button id="btnKnow"
+              class="difficulty-btn flex-1 border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3.5 px-4 rounded-btn text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm">
+              <span class="text-base">😊</span> I Know This
+            </button>
+          </div>
+
+          <!-- Prev/Next Navigation Controls -->
+          <div class="flex justify-between items-center pt-2 max-w-lg mx-auto">
+            <button id="prevCardBtn"
+              class="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-bold transition-colors">
+              ← Previous Card
+            </button>
+            <button id="nextCardBtn"
+              class="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-bold transition-colors">
+              Next Card →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- PART 2 (8): End Session Summary View Container -->
+    <div id="endSummaryContainer" class="hidden max-w-xl mx-auto py-12 text-center space-y-6">
+      <div
+        class="bg-white dark:bg-slate-800 rounded-card p-10 border border-borderClr dark:border-slate-700 shadow-2xl space-y-6">
+        <div id="endSummaryStats"></div>
+
+        <button id="restartBtn"
+          class="w-full bg-primary dark:bg-blue-600 text-white py-3.5 rounded-btn font-extrabold text-sm hover:bg-opacity-90 transition-all shadow-md">
+          Study Again 🔄
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Notification Feedback Container -->
+  <div id="toastNotification"
+    class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-2.5 rounded-full text-white text-xs font-extrabold shadow-2xl transition-all duration-300 z-50 transform translate-y-4 opacity-0 pointer-events-none">
+    Nice! 🔥
+  </div>
+
+  <!-- Flashcard Logic Script -->
+  <script src="flashcard.js"></script>
+</body>
+
+</html>

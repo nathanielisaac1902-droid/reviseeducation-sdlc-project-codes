@@ -2200,6 +2200,8 @@
       const [deckSubject, setDeckSubject] = useState("BIOLOGY");
       const [deckTitle, setDeckTitle] = useState("Biology: Cell Organelles");
       const [isGenerating, setIsGenerating] = useState(false);
+      const [savedMessage, setSavedMessage] = useState('');
+      const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
       const [editableCards, setEditableCards] = useState([
         { id: 'c1', front: "Mitochondria", back: "Powerhouse of the cell; produces ATP via cellular respiration." },
@@ -2222,21 +2224,73 @@
       const [editingCardId, setEditingCardId] = useState(null);
       const [editFrontText, setEditFrontText] = useState('');
       const [editBackText, setEditBackText] = useState('');
+      let saveMessageTimeout = null;
+      let saveModalTimeout = null;
 
-      const handleGenerateDeck = () => {
+      const handleSaveDeck = () => {
+        const normalizedCards = editableCards
+          .map((card, index) => ({
+            id: card?.id || `card-${Date.now()}-${index}`,
+            front: (card?.front ?? '').trim(),
+            back: (card?.back ?? '').trim()
+          }))
+          .filter((card) => card.front || card.back)
+          .map((card, index) => ({
+            ...card,
+            front: card.front || `New Term ${index + 1}`,
+            back: card.back || 'Definition pending.'
+          }));
+
+        if (!normalizedCards.length) {
+          setSavedMessage('Add at least one valid card before saving.');
+          window.clearTimeout?.(saveMessageTimeout);
+          saveMessageTimeout = window.setTimeout(() => setSavedMessage(''), 2500);
+          return;
+        }
+
         setIsGenerating(true);
         setTimeout(() => {
           setIsGenerating(false);
           const newDeckObj = {
             id: 'deck-' + Date.now(),
-            title: deckTitle,
+            title: deckTitle.trim() || 'Untitled Deck',
             subject: deckSubject,
-            cards: editableCards
+            cards: normalizedCards
           };
-          setFlashcardDecks(prev => [newDeckObj, ...prev]);
+
+          setFlashcardDecks(prev => [newDeckObj, ...prev.filter(deck => deck && deck.id !== newDeckObj.id)]);
           setCurrentDeck(newDeckObj);
-          navigate('/flashcard-study');
+
+          if (window.ReviseAuth && typeof window.ReviseAuth.saveUserDeck === 'function') {
+            window.ReviseAuth.saveUserDeck(newDeckObj);
+          }
+
+          if (window.ReviseFX) {
+            if (typeof window.ReviseFX.playSound === 'function') {
+              window.ReviseFX.playSound('save');
+            }
+            if (typeof window.ReviseFX.showNotification === 'function') {
+              window.ReviseFX.showNotification('Flashcard Deck Saved', 'Your deck is ready to study when you are.', 'success');
+            }
+          }
+
+          setSavedMessage('Flashcard deck saved successfully! 💳✨');
+          setIsSaveModalOpen(true);
+          window.clearTimeout?.(saveMessageTimeout);
+          window.clearTimeout?.(saveModalTimeout);
+          saveMessageTimeout = window.setTimeout(() => setSavedMessage(''), 3000);
+          saveModalTimeout = window.setTimeout(() => setIsSaveModalOpen(false), 1800);
         }, 1200);
+      };
+
+      const handleGenerateDeck = handleSaveDeck;
+
+      const handleStartStudying = () => {
+        const activeDeck = flashcardDecks[0] || null;
+        if (activeDeck) {
+          setCurrentDeck(activeDeck);
+        }
+        navigate('/flashcard-study');
       };
 
       const handleAddCard = () => {
@@ -2245,11 +2299,11 @@
           front: "New Term " + (editableCards.length + 1),
           back: "Explanation / definition for term."
         };
-        setEditableCards([...editableCards, newCard]);
+        setEditableCards(prev => [...prev, newCard]);
       };
 
       const handleDeleteCard = (id) => {
-        setEditableCards(editableCards.filter(c => c.id !== id));
+        setEditableCards(prev => prev.filter(c => c.id !== id));
       };
 
       const handleStartRenameCard = (card) => {
@@ -2259,14 +2313,29 @@
       };
 
       const handleSaveRenameCard = (cardId) => {
-        setEditableCards(editableCards.map(c => c.id === cardId ? { ...c, front: editFrontText, back: editBackText } : c));
+        setEditableCards(prev => prev.map(c => c.id === cardId ? { ...c, front: editFrontText.trim() || c.front, back: editBackText.trim() || c.back } : c));
         setEditingCardId(null);
       };
 
       return (
         <div className="space-y-6 pb-12">
-          <div className="flex gap-8 items-start">
-            <div className="w-[420px] bg-white dark:bg-slate-800 rounded-card p-8 border border-borderClr dark:border-slate-700 shadow-sm space-y-6 flex-shrink-0">
+          {isSaveModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-800 rounded-card border border-borderClr dark:border-slate-700 px-6 py-5 shadow-2xl text-center min-w-[220px]">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-xl">
+                  ✓
+                </div>
+                <h3 className="text-lg font-extrabold text-slate-800 dark:text-white">Deck saved!</h3>
+              </div>
+            </div>
+          )}
+          {savedMessage && (
+            <div className="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-btn text-xs font-bold shadow-sm">
+              {savedMessage}
+            </div>
+          )}
+          <div className="flex flex-col xl:flex-row gap-8 items-start">
+            <div className="w-full max-w-[420px] bg-white dark:bg-slate-800 rounded-card p-6 sm:p-8 border border-borderClr dark:border-slate-700 shadow-sm space-y-6 flex-shrink-0">
               <div>
                 <h2 className="text-lg font-extrabold text-primary dark:text-white mb-1 flex items-center gap-2">
                   <img src="logo_icon.png" alt="Icon" className="w-6 h-6 object-contain" />
@@ -2326,7 +2395,15 @@
                   disabled={isGenerating}
                   className="w-full bg-primary dark:bg-indigo-600 text-white py-3 rounded-btn font-bold text-xs hover:bg-opacity-95 shadow flex items-center justify-center gap-2"
                 >
-                  <span>✨</span> {isGenerating ? 'Generating Deck...' : 'Generate & Start Study'}
+                  <span>✨</span> {isGenerating ? 'Generating Deck...' : 'Generate & Save Deck'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleStartStudying}
+                  className="w-full border border-primary text-primary dark:border-indigo-400 dark:text-indigo-300 bg-white dark:bg-slate-800 py-3 rounded-btn font-bold text-xs hover:bg-primary/5 dark:hover:bg-indigo-400/10 shadow-sm flex items-center justify-center gap-2"
+                >
+                  <span>▶️</span> Start Studying
                 </button>
 
                 {isGenerating && (
@@ -2354,7 +2431,7 @@
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {editableCards.map((card, i) => {
                   const isEditingThisCard = editingCardId === card.id;
                   return (
@@ -2420,10 +2497,19 @@
       const [renamedFront, setRenamedFront] = useState('');
       const [renamedBack, setRenamedBack] = useState('');
 
-      const cards = currentDeck ? currentDeck.cards : DEFAULT_DECKS[0].cards;
-      // Clamp index in case we switched to a smaller deck
-      const safeIndex = Math.min(deckCardIndex, cards.length - 1);
-      const currentCard = cards[safeIndex] || cards[0];
+      const cards = Array.isArray(currentDeck?.cards) && currentDeck.cards.length
+        ? currentDeck.cards
+        : (Array.isArray(DEFAULT_DECKS?.[0]?.cards) ? DEFAULT_DECKS[0].cards : []);
+      const safeIndex = cards.length ? Math.min(Math.max(deckCardIndex, 0), cards.length - 1) : 0;
+      const currentCard = cards[safeIndex] || null;
+      const cardCounterText = cards.length ? `${Math.min(safeIndex + 1, cards.length)} / ${cards.length}` : '0 / 0';
+      const remainingCardsText = cards.length ? `${Math.max(cards.length - (safeIndex + 1), 0)} Cards` : '0 Cards';
+      const displayDeckTitle = currentDeck ? currentDeck.title : 'No Deck Selected';
+
+      const updateDeckInState = useCallback((updatedDeck) => {
+        if (!updatedDeck || !updatedDeck.id) return;
+        setFlashcardDecks(prev => prev.map(deck => deck && deck.id === updatedDeck.id ? updatedDeck : deck));
+      }, [setFlashcardDecks]);
 
       useEffect(() => {
         if (currentDeck) {
@@ -2431,14 +2517,25 @@
         }
       }, [currentDeck]);
 
-      // Reset card index whenever the active deck changes
       useEffect(() => {
-        setDeckCardIndex(0);
+        if (!currentDeck) {
+          setDeckCardIndex(0);
+          setIsFlipped(false);
+          setIsRenamingCard(false);
+          setIsRenamingDeck(false);
+          setDeckTitleInput('');
+          return;
+        }
+
+        setDeckCardIndex(prev => {
+          if (!cards.length) return 0;
+          return Math.min(Math.max(prev, 0), cards.length - 1);
+        });
         setIsFlipped(false);
         setIsRenamingCard(false);
         setIsRenamingDeck(false);
-        setDeckTitleInput(currentDeck ? currentDeck.title : '');
-      }, [currentDeck && currentDeck.id]);
+        setDeckTitleInput(currentDeck.title);
+      }, [currentDeck && currentDeck.id, cards.length]);
 
       useEffect(() => {
         if (!isTimerActive) return;
@@ -2448,7 +2545,6 @@
         return () => clearInterval(interval);
       }, [isTimerActive]);
 
-      // Use a ref so the keyboard handler always sees the latest handleNextCard
       const handleNextCardRef = useRef(null);
 
       useEffect(() => {
@@ -2480,9 +2576,34 @@
         });
       };
 
+      const handleResetDeck = useCallback(() => {
+        setDeckCardIndex(0);
+        setIsFlipped(false);
+        resetDifficultySquareHighlight();
+      }, [setDeckCardIndex]);
+
+      const handleShuffleCards = useCallback(() => {
+        if (!currentDeck || cards.length < 2) {
+          handleResetDeck();
+          return;
+        }
+
+        const shuffledCards = [...cards];
+        for (let i = shuffledCards.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+        }
+
+        const updatedDeck = { ...currentDeck, cards: shuffledCards };
+        setCurrentDeck(updatedDeck);
+        updateDeckInState(updatedDeck);
+        setDeckCardIndex(0);
+        setIsFlipped(false);
+      }, [cards, currentDeck, handleResetDeck, setCurrentDeck, updateDeckInState]);
+
       const handleDifficulty = (level, btnElement) => {
         resetDifficultySquareHighlight();
-        if (btnElement) btnElement.classList.add('active'); // This makes it indigo
+        if (btnElement) btnElement.classList.add('active');
         setSelectedDifficulty(level);
         if (currentCard) {
           localStorage.setItem(`rs_bio_deck_1_${currentCard.id}`, level);
@@ -2490,21 +2611,40 @@
         setTimeout(() => {
           handleNextCard();
           resetDifficultySquareHighlight();
-        }, 300); // 300ms delay for visual feedback
+        }, 300);
       };
 
       const handleNextCard = useCallback(() => {
-        setIsFlipped(false);
-        setDeckCardIndex((safeIndex + 1) % cards.length);
-      }, [safeIndex, cards.length, setDeckCardIndex]);
+        if (!cards.length) {
+          setDeckCardIndex(0);
+          setIsFlipped(false);
+          return;
+        }
 
-      // Keep ref up-to-date so the stale keyboard closure always calls the latest version
+        setIsFlipped(false);
+        if (cards.length === 1) {
+          setDeckCardIndex(0);
+          return;
+        }
+        setDeckCardIndex(prev => (prev + 1) % cards.length);
+      }, [cards.length, setDeckCardIndex]);
+
       handleNextCardRef.current = handleNextCard;
 
       const handlePrevCard = useCallback(() => {
+        if (!cards.length) {
+          setDeckCardIndex(0);
+          setIsFlipped(false);
+          return;
+        }
+
         setIsFlipped(false);
-        setDeckCardIndex((safeIndex - 1 + cards.length) % cards.length);
-      }, [safeIndex, cards.length, setDeckCardIndex]);
+        if (cards.length === 1) {
+          setDeckCardIndex(0);
+          return;
+        }
+        setDeckCardIndex(prev => (prev - 1 + cards.length) % cards.length);
+      }, [cards.length, setDeckCardIndex]);
 
       const handleShareDeck = async () => {
         if (!currentDeck) return;
@@ -2515,23 +2655,26 @@
       };
 
       const handleOpenCardRename = () => {
+        if (!currentCard) return;
         setRenamedFront(currentCard.front);
         setRenamedBack(currentCard.back);
         setIsRenamingCard(true);
       };
 
       const handleSaveCardRename = () => {
-        const updatedCards = cards.map((c, idx) => idx === deckCardIndex ? { ...c, front: renamedFront, back: renamedBack } : c);
+        if (!currentDeck || !cards.length) return;
+        const updatedCards = cards.map((c, idx) => idx === safeIndex ? { ...c, front: renamedFront, back: renamedBack } : c);
         const updatedDeck = { ...currentDeck, cards: updatedCards };
         setCurrentDeck(updatedDeck);
-        setFlashcardDecks(flashcardDecks.map(d => d.id === currentDeck.id ? updatedDeck : d));
+        updateDeckInState(updatedDeck);
         setIsRenamingCard(false);
       };
 
       const handleSaveDeckRename = () => {
+        if (!currentDeck) return;
         const updatedDeck = { ...currentDeck, title: deckTitleInput };
         setCurrentDeck(updatedDeck);
-        setFlashcardDecks(flashcardDecks.map(d => d.id === currentDeck.id ? updatedDeck : d));
+        updateDeckInState(updatedDeck);
         setIsRenamingDeck(false);
       };
 
@@ -2546,11 +2689,11 @@
             <div className="space-y-4">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Cards Mastered</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">{deckCardIndex + 1} / {cards.length}</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{cardCounterText}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Remaining</span>
-                <span className="font-bold text-amber-600 dark:text-amber-400">{cards.length - (deckCardIndex + 1)} Cards</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">{remainingCardsText}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Study Streak</span>
@@ -2613,11 +2756,11 @@
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-extrabold text-primary dark:text-white">{currentDeck.title}</h2>
-                  <button onClick={() => { setDeckTitleInput(currentDeck.title); setIsRenamingDeck(true); }} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold">✏️ Rename Deck</button>
+                  <h2 className="text-xl font-extrabold text-primary dark:text-white">{displayDeckTitle}</h2>
+                  <button onClick={() => { setDeckTitleInput(displayDeckTitle); setIsRenamingDeck(true); }} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold">✏️ Rename Deck</button>
                 </div>
               )}
-                <div className="flex items-center gap-3"><button onClick={handleShareDeck} className="border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-btn text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm">🔗 Share Deck</button><span className="text-xs font-bold text-slate-500 dark:text-slate-400">Card {deckCardIndex + 1} of {cards.length}</span></div>
+                <div className="flex items-center gap-3"><button onClick={handleShareDeck} className="border border-borderClr dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-btn text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm">🔗 Share Deck</button><span className="text-xs font-bold text-slate-500 dark:text-slate-400">Card {cardCounterText}</span></div>
             </div>
 
             <div
@@ -2700,8 +2843,10 @@
                 </button>
               </div>
 
-              <div className="flex justify-between items-center pt-4 max-w-md mx-auto">
+              <div className="flex justify-between items-center pt-4 max-w-md mx-auto gap-2">
                 <button onClick={handlePrevCard} className="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-semibold">← Previous Card</button>
+                <button onClick={handleShuffleCards} className="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-semibold">Shuffle</button>
+                <button onClick={handleResetDeck} className="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-semibold">Reset</button>
                 <button onClick={handleNextCard} className="text-xs text-slate-500 hover:text-primary dark:hover:text-white font-semibold">Next Card →</button>
               </div>
             </div>
